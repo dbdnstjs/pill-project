@@ -17,7 +17,6 @@ public interface InteractionRepository extends JpaRepository<Interaction, Long> 
       @Param("id1") Long ingredientId1, @Param("id2") Long ingredientId2);
 
   @Query(
-      "SELECT i FROM Interaction i WHERE "
-          + "i.ingredient1.id IN :ids OR i.ingredient2.id IN :ids")
+      "SELECT i FROM Interaction i WHERE " + "i.ingredient1.id IN :ids OR i.ingredient2.id IN :ids")
   List<Interaction> findAllByIngredientIds(@Param("ids") List<Long> ingredientIds);
 }

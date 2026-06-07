@@ -6,14 +6,14 @@ import org.springframework.boot.context.properties.bind.ConstructorBinding;
 @ConfigurationProperties(prefix = "openapi")
 public class OpenApiProperties {
 
-    private final String secretKey;
+  private final String secretKey;
 
-    @ConstructorBinding
-    public OpenApiProperties(String secretKey) {
-        this.secretKey = secretKey;
-    }
+  @ConstructorBinding
+  public OpenApiProperties(String secretKey) {
+    this.secretKey = secretKey;
+  }
 
-    public String getSecretKey() {
-        return secretKey;
-    }
+  public String getSecretKey() {
+    return secretKey;
+  }
 }

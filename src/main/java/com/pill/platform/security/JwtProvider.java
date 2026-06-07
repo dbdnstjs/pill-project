@@ -16,8 +16,7 @@ public class JwtProvider {
   private final long expiration;
 
   public JwtProvider(JwtProperties properties) {
-    this.key =
-        Keys.hmacShaKeyFor(properties.getSecret().getBytes(StandardCharsets.UTF_8));
+    this.key = Keys.hmacShaKeyFor(properties.getSecret().getBytes(StandardCharsets.UTF_8));
     this.expiration = properties.getExpiration();
   }
 
@@ -32,12 +31,7 @@ public class JwtProvider {
   }
 
   public String getEmailFromToken(String token) {
-    return Jwts.parser()
-        .verifyWith(key)
-        .build()
-        .parseSignedClaims(token)
-        .getPayload()
-        .getSubject();
+    return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject();
   }
 
   public boolean validateToken(String token) {
