@@ -11,7 +11,7 @@ BEGIN;
 -- =====================================================
 -- 1. 영양소(ingredients) 업서트
 -- =====================================================
-INSERT INTO ingredients (name, description, default_unit) VALUES
+INSERT INTO ingredients (name, description, unit) VALUES
   ('비타민 C',        '피부·면역·항산화',         'mg'),
   ('비타민 D',        '뼈·칼슘흡수·면역',          'μg'),
   ('비타민 A',        '눈건강·면역',               'μgRAE'),
@@ -37,7 +37,7 @@ INSERT INTO ingredients (name, description, default_unit) VALUES
   ('코엔자임Q10',     '심장·에너지·항산화',         'mg')
 ON CONFLICT (name) DO UPDATE SET
   description  = EXCLUDED.description,
-  default_unit = EXCLUDED.default_unit;
+  unit = EXCLUDED.unit;
 
 -- =====================================================
 -- 2. 기존 nutrient_limits 초기화 (재실행 안전)
