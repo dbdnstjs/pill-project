@@ -9,5 +9,5 @@ public interface SupplementRepository extends JpaRepository<Supplement, Long> {
 
   List<Supplement> findByProductNameContainingIgnoreCase(String keyword);
 
-  Optional<Supplement> findByApiProductId(String apiProductId);
+  Optional<Supplement> findByReportNo(String reportNo);
 }
