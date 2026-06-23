@@ -1,7 +1,7 @@
 import json
 import os
 
-import google.generativeai as genai
+from google import genai
 
 from app.schemas.analysis import (
     AnalyzeRequest,
@@ -14,12 +14,13 @@ from app.schemas.analysis import (
 
 class GeminiService:
     def __init__(self):
-        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        self.model = genai.GenerativeModel("gemini-1.5-flash")
+        self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
     async def analyze_interactions(self, request: AnalyzeRequest) -> AnalyzeResponse:
         prompt = self._build_prompt(request)
-        response = self.model.generate_content(prompt)
+        response = self.client.models.generate_content(
+            model="gemini-2.5-flash", contents=prompt
+        )
         return self._parse_response(response.text)
 
     def _build_prompt(self, request: AnalyzeRequest) -> str:

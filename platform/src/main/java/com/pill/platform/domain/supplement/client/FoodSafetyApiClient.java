@@ -5,7 +5,6 @@ import com.pill.platform.config.OpenApiProperties;
 import com.pill.platform.domain.supplement.dto.SupplementSearchResult;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -13,29 +12,31 @@ import org.springframework.web.client.RestClient;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class FoodSafetyApiClient {
 
-  @Qualifier("foodSafetyRestClient")
   private final RestClient restClient;
-
   private final OpenApiProperties properties;
+
+  public FoodSafetyApiClient(
+      @Qualifier("foodSafetyRestClient") RestClient restClient, OpenApiProperties properties) {
+    this.restClient = restClient;
+    this.properties = properties;
+  }
 
   public List<SupplementSearchResult> search(String keyword, int pageNo, int numOfRows) {
     try {
+      int startIdx = (pageNo - 1) * numOfRows + 1;
+      int endIdx = pageNo * numOfRows;
+
       JsonNode root =
           restClient
               .get()
               .uri(
-                  uriBuilder ->
-                      uriBuilder
-                          .path("/getHtFoodPrmsInfoList")
-                          .queryParam("serviceKey", properties.getSecretKey())
-                          .queryParam("pageNo", pageNo)
-                          .queryParam("numOfRows", numOfRows)
-                          .queryParam("PRDT_NM", keyword)
-                          .queryParam("_type", "json")
-                          .build())
+                  "/{key}/C003/json/{start}/{end}/PRDLST_NM={keyword}",
+                  properties.getSecretKey(),
+                  startIdx,
+                  endIdx,
+                  keyword)
               .retrieve()
               .body(JsonNode.class);
 
@@ -50,19 +51,11 @@ public class FoodSafetyApiClient {
     List<SupplementSearchResult> results = new ArrayList<>();
     if (root == null) return results;
 
-    // response.body.items.item 또는 body.items 구조 모두 처리
-    JsonNode body = root.path("response").path("body");
-    if (body.isMissingNode()) body = root.path("body");
-
-    JsonNode items = body.path("items").path("item");
-    if (items.isMissingNode()) items = body.path("items");
-
-    if (items.isArray()) {
-      for (JsonNode item : items) {
+    JsonNode rows = root.path("C003").path("row");
+    if (rows.isArray()) {
+      for (JsonNode item : rows) {
         results.add(toResult(item));
       }
-    } else if (!items.isMissingNode() && items.isObject()) {
-      results.add(toResult(items));
     }
 
     return results;
@@ -70,10 +63,10 @@ public class FoodSafetyApiClient {
 
   private SupplementSearchResult toResult(JsonNode item) {
     return new SupplementSearchResult(
-        text(item, "REPORT_NO"),
-        text(item, "PRDT_NM"),
+        text(item, "PRDLST_REPORT_NO"),
+        text(item, "PRDLST_NM"),
         text(item, "BSSH_NM"),
-        text(item, "PRDLST_MAKG_MTHD_NM"),
+        text(item, "SHAP"),
         text(item, "PRIMARY_FNCLTY"),
         text(item, "IFTKN_ATNT_MATR_CN"),
         text(item, "RAWMTRL_NM"));
