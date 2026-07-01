@@ -9,4 +9,6 @@ public interface NutrientLimitRepository extends JpaRepository<NutrientLimit, Lo
 
   List<NutrientLimit> findByIngredientIdAndAgeGroupAndGender(
       Long ingredientId, String ageGroup, Gender gender);
+
+  List<NutrientLimit> findByAgeGroupAndGender(String ageGroup, Gender gender);
 }

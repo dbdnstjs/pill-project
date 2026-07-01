@@ -25,6 +25,8 @@ class IngredientInfo(BaseModel):
 class SupplementInfo(BaseModel):
     name: str
     ingredients: list[IngredientInfo] = []
+    rawMaterial: Optional[str] = None
+    primaryFunction: Optional[str] = None
 
 
 class AnalyzeRequest(BaseModel):

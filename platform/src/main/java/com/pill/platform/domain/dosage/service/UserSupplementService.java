@@ -1,5 +1,6 @@
 package com.pill.platform.domain.dosage.service;
 
+import com.pill.platform.domain.dosage.dto.AutoScheduleResponse;
 import com.pill.platform.domain.dosage.dto.DosageScheduleRequest;
 import com.pill.platform.domain.dosage.dto.DosageScheduleResponse;
 import com.pill.platform.domain.dosage.dto.UserSupplementRequest;
@@ -9,11 +10,15 @@ import com.pill.platform.domain.dosage.entity.UserSupplement;
 import com.pill.platform.domain.dosage.repository.DosageScheduleRepository;
 import com.pill.platform.domain.dosage.repository.UserSupplementRepository;
 import com.pill.platform.domain.supplement.entity.Supplement;
+import com.pill.platform.domain.supplement.repository.SupplementIngredientRepository;
 import com.pill.platform.domain.supplement.repository.SupplementRepository;
 import com.pill.platform.domain.user.entity.User;
 import com.pill.platform.domain.user.repository.UserRepository;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +31,9 @@ public class UserSupplementService {
   private final UserSupplementRepository userSupplementRepository;
   private final DosageScheduleRepository dosageScheduleRepository;
   private final SupplementRepository supplementRepository;
+  private final SupplementIngredientRepository supplementIngredientRepository;
   private final UserRepository userRepository;
+  private final TimingRuleService timingRuleService;
 
   @Transactional
   public UserSupplementResponse register(String email, UserSupplementRequest request) {
@@ -99,6 +106,58 @@ public class UserSupplementService {
             .findById(scheduleId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 스케줄입니다."));
     schedule.deactivate();
+  }
+
+  @Transactional
+  public AutoScheduleResponse autoSchedule(String email) {
+    User user = getUser(email);
+    List<UserSupplement> activeSupplements =
+        userSupplementRepository.findByUserIdAndIsActiveTrue(user.getId());
+
+    Set<String> allIngredients = new LinkedHashSet<>();
+    List<AutoScheduleResponse.Item> items = new ArrayList<>();
+
+    for (UserSupplement us : activeSupplements) {
+      List<String> ingredientNames =
+          supplementIngredientRepository.findBySupplementId(us.getSupplement().getId()).stream()
+              .map(si -> si.getIngredient().getName())
+              .toList();
+      allIngredients.addAll(ingredientNames);
+
+      TimingRuleService.Bucket bucket = timingRuleService.resolveBucket(ingredientNames);
+
+      dosageScheduleRepository
+          .findByUserSupplementIdAndIsActiveTrue(us.getId())
+          .forEach(DosageSchedule::deactivate);
+
+      DosageSchedule schedule =
+          DosageSchedule.builder()
+              .userSupplement(us)
+              .scheduledTime(bucket.getTime())
+              .monday(true)
+              .tuesday(true)
+              .wednesday(true)
+              .thursday(true)
+              .friday(true)
+              .saturday(true)
+              .sunday(true)
+              .build();
+      dosageScheduleRepository.save(schedule);
+
+      items.add(
+          new AutoScheduleResponse.Item(
+              us.getId(),
+              us.getSupplement().getProductName(),
+              bucket.getLabel(),
+              bucket.getTime()));
+    }
+
+    String caution =
+        allIngredients.contains("칼슘") && allIngredients.contains("철분")
+            ? "철분과 칼슘은 서로 흡수를 방해해요. 칼슘은 아침에, 철분은 저녁에 드시도록 시간을 나눠 스케줄했어요."
+            : null;
+
+    return new AutoScheduleResponse(items, caution);
   }
 
   private UserSupplement getMyUserSupplement(String email, Long userSupplementId) {

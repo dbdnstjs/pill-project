@@ -6,6 +6,7 @@ import com.pill.platform.domain.user.dto.SignUpRequest;
 import com.pill.platform.domain.user.entity.User;
 import com.pill.platform.domain.user.repository.UserRepository;
 import com.pill.platform.security.JwtProvider;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,11 @@ public class AuthService {
     if (userRepository.existsByEmail(request.getEmail())) {
       throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
     }
+    String ageGroup =
+        request.getAgeGroup() != null
+            ? request.getAgeGroup()
+            : computeAgeGroup(request.getBirthYear());
+
     User user =
         User.builder()
             .email(request.getEmail())
@@ -31,7 +37,7 @@ public class AuthService {
             .name(request.getName())
             .birthYear(request.getBirthYear())
             .gender(request.getGender())
-            .ageGroup(request.getAgeGroup())
+            .ageGroup(ageGroup)
             .build();
     userRepository.save(user);
   }
@@ -49,5 +55,13 @@ public class AuthService {
 
     String token = jwtProvider.generateToken(user.getEmail());
     return new AuthResponse(token, user.getName());
+  }
+
+  private String computeAgeGroup(Integer birthYear) {
+    if (birthYear == null) return "50-64";
+    int age = LocalDate.now().getYear() - birthYear;
+    if (age < 65) return "50-64";
+    if (age < 75) return "65-74";
+    return "75+";
   }
 }

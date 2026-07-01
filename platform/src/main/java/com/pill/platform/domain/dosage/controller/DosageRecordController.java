@@ -2,6 +2,7 @@ package com.pill.platform.domain.dosage.controller;
 
 import com.pill.platform.domain.dosage.dto.DosageRecordRequest;
 import com.pill.platform.domain.dosage.dto.DosageRecordResponse;
+import com.pill.platform.domain.dosage.dto.TodayChecklistResponse;
 import com.pill.platform.domain.dosage.service.DosageRecordService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
@@ -35,5 +36,11 @@ public class DosageRecordController {
   public ResponseEntity<List<DosageRecordResponse>> getByDate(
       @AuthenticationPrincipal UserDetails userDetails, @RequestParam LocalDate date) {
     return ResponseEntity.ok(dosageRecordService.getByDate(userDetails.getUsername(), date));
+  }
+
+  @GetMapping("/today")
+  public ResponseEntity<TodayChecklistResponse> getToday(
+      @AuthenticationPrincipal UserDetails userDetails) {
+    return ResponseEntity.ok(dosageRecordService.getToday(userDetails.getUsername()));
   }
 }

@@ -28,19 +28,27 @@ public class FoodSafetyApiClient {
       int startIdx = (pageNo - 1) * numOfRows + 1;
       int endIdx = pageNo * numOfRows;
 
-      JsonNode root =
-          restClient
-              .get()
-              .uri(
-                  "/{key}/C003/json/{start}/{end}/PRDLST_NM={keyword}",
-                  properties.getSecretKey(),
-                  startIdx,
-                  endIdx,
-                  keyword)
-              .retrieve()
-              .body(JsonNode.class);
+      String key = properties.getSecretKey();
+      String path =
+          String.format("/%s/C003/json/%d/%d/PRDLST_NM=%s", key, startIdx, endIdx, keyword);
+      log.info("식품안전처 API 호출 URL: {}{}", properties.getBaseUrl(), path);
+      log.info(
+          "식품안전처 API 호출: keyword={}, start={}, end={}, key={}",
+          keyword,
+          startIdx,
+          endIdx,
+          key != null ? key.substring(0, Math.min(8, key.length())) + "..." : "NULL");
 
-      return parseItems(root);
+      JsonNode root = restClient.get().uri(path).retrieve().body(JsonNode.class);
+
+      log.info(
+          "식품안전처 API 응답: {}",
+          root != null
+              ? root.toString().substring(0, Math.min(200, root.toString().length()))
+              : "null");
+      List<SupplementSearchResult> results = parseItems(root);
+      log.info("파싱 결과: {}건", results.size());
+      return results;
     } catch (Exception e) {
       log.error("식품안전처 API 호출 실패: {}", e.getMessage());
       throw new IllegalStateException("영양제 검색 중 오류가 발생했습니다.");

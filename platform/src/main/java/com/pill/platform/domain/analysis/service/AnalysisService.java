@@ -52,7 +52,11 @@ public class AnalysisService {
                                   new IngredientInfo(
                                       si.getIngredient().getName(), si.getAmount(), si.getUnit()))
                           .toList();
-                  return new SupplementInfo(us.getSupplement().getProductName(), ingredients);
+                  return new SupplementInfo(
+                      us.getSupplement().getProductName(),
+                      ingredients,
+                      us.getSupplement().getRawMaterial(),
+                      us.getSupplement().getPrimaryFunction());
                 })
             .toList();
 

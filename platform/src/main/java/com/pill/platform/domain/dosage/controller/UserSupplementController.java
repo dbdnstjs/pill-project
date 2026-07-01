@@ -1,5 +1,6 @@
 package com.pill.platform.domain.dosage.controller;
 
+import com.pill.platform.domain.dosage.dto.AutoScheduleResponse;
 import com.pill.platform.domain.dosage.dto.DosageScheduleRequest;
 import com.pill.platform.domain.dosage.dto.DosageScheduleResponse;
 import com.pill.platform.domain.dosage.dto.UserSupplementRequest;
@@ -44,6 +45,12 @@ public class UserSupplementController {
       @AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
     userSupplementService.deactivate(userDetails.getUsername(), id);
     return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/auto-schedule")
+  public ResponseEntity<AutoScheduleResponse> autoSchedule(
+      @AuthenticationPrincipal UserDetails userDetails) {
+    return ResponseEntity.ok(userSupplementService.autoSchedule(userDetails.getUsername()));
   }
 
   @PostMapping("/{id}/schedules")

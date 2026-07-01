@@ -28,7 +28,11 @@ public class AiServerClient {
 
   public record AiAnalyzeRequest(List<SupplementInfo> supplements, String ageGroup, String gender) {
 
-    public record SupplementInfo(String name, List<IngredientInfo> ingredients) {}
+    public record SupplementInfo(
+        String name,
+        List<IngredientInfo> ingredients,
+        String rawMaterial,
+        String primaryFunction) {}
 
     public record IngredientInfo(String name, Double amount, String unit) {}
   }

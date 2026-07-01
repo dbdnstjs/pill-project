@@ -17,6 +17,7 @@ public class SupplementService {
 
   private final SupplementRepository supplementRepository;
   private final FoodSafetyApiClient foodSafetyApiClient;
+  private final IngredientParseService ingredientParseService;
 
   public List<SupplementSearchResult> search(String keyword, int page, int size) {
     return foodSafetyApiClient.search(keyword, page, size);
@@ -40,6 +41,7 @@ public class SupplementService {
                       .rawMaterial(result.rawMaterial())
                       .build();
               supplementRepository.save(supplement);
+              ingredientParseService.parseAndSave(supplement);
               return SupplementResponse.from(supplement);
             });
   }

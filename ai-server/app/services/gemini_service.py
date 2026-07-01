@@ -31,9 +31,15 @@ class GeminiService:
                     f"{i.name} {i.amount}{i.unit}" if i.amount else i.name
                     for i in s.ingredients
                 )
+            elif s.rawMaterial:
+                ingredients_text = s.rawMaterial
             else:
                 ingredients_text = "성분 정보 없음"
-            supplements_text += f"- {s.name}: {ingredients_text}\n"
+
+            line = f"- {s.name}: {ingredients_text}"
+            if s.primaryFunction:
+                line += f" (기능: {s.primaryFunction})"
+            supplements_text += line + "\n"
 
         user_info_parts = []
         if request.ageGroup:

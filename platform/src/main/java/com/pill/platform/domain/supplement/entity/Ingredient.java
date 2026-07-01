@@ -27,7 +27,7 @@ public class Ingredient {
   @Column(columnDefinition = "TEXT")
   private String description;
 
-  @Column(length = 20)
+  @Column(name = "unit", length = 20)
   private String defaultUnit;
 
   @Builder
