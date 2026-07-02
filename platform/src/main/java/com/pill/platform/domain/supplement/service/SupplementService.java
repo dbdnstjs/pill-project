@@ -7,6 +7,7 @@ import com.pill.platform.domain.supplement.entity.Supplement;
 import com.pill.platform.domain.supplement.repository.SupplementIngredientRepository;
 import com.pill.platform.domain.supplement.repository.SupplementRepository;
 import java.util.List;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +22,13 @@ public class SupplementService {
   private final FoodSafetyApiClient foodSafetyApiClient;
   private final IngredientParseService ingredientParseService;
 
+  private static final Pattern AMOUNT_PATTERN =
+      Pattern.compile("[\\d]+\\s*(mg|g|μg|mcg|IU|UI|㎎|㎍|㎰)", Pattern.CASE_INSENSITIVE);
+
   public List<SupplementSearchResult> search(String keyword, int page, int size) {
-    return foodSafetyApiClient.search(keyword, page, size);
+    return foodSafetyApiClient.search(keyword, page, size).stream()
+        .filter(r -> r.rawMaterial() != null && AMOUNT_PATTERN.matcher(r.rawMaterial()).find())
+        .toList();
   }
 
   @Transactional
