@@ -1,0 +1,9 @@
+[build]
+builder = "nixpacks"
+buildCommand = "./gradlew bootJar -x test"
+
+[deploy]
+startCommand = "java -Dspring.profiles.active=prod -jar build/libs/platform-0.0.1-SNAPSHOT.jar"
+healthcheckPath = "/api/auth/login"
+healthcheckTimeout = 60
+restartPolicyType = "on_failure"
