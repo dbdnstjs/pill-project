@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SupplementService {
 
   private final SupplementRepository supplementRepository;
+  private final SupplementIngredientRepository supplementIngredientRepository;
   private final FoodSafetyApiClient foodSafetyApiClient;
   private final IngredientParseService ingredientParseService;
 
