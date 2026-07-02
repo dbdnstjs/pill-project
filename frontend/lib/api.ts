@@ -81,6 +81,9 @@ export const api = {
 
   getMySupplements: () => request<UserSupplement[]>("/api/user-supplements"),
 
+  deleteUserSupplement: (id: number) =>
+    request(`/api/user-supplements/${id}`, { method: "DELETE" }),
+
   analyze: (ageGroup?: string, gender?: string) =>
     request<AnalysisResponse>("/api/analysis", {
       method: "POST",

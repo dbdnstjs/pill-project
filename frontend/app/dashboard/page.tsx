@@ -14,6 +14,8 @@ export default function DashboardPage() {
   const [checklist, setChecklist] = useState<TodayChecklistResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [scheduling, setScheduling] = useState(false);
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [showManage, setShowManage] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -40,6 +42,21 @@ export default function DashboardPage() {
       alert(err instanceof Error ? err.message : "시간표 설정에 실패했습니다.");
     } finally {
       setScheduling(false);
+    }
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm("이 영양제를 목록에서 삭제할까요?")) return;
+    setDeleting(id);
+    try {
+      await api.deleteUserSupplement(id);
+      const [s, c] = await Promise.all([api.getMySupplements(), api.getTodayChecklist()]);
+      setSupplements(s);
+      setChecklist(c);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "삭제에 실패했습니다.");
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -155,7 +172,35 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="flex flex-col gap-4 mt-8">
+        {supplements.length > 0 && (
+          <div className="mt-8">
+            <button
+              onClick={() => setShowManage(!showManage)}
+              className="w-full text-left text-lg font-bold text-gray-500 mb-3 flex items-center justify-between"
+            >
+              <span>내 영양제 목록 ({supplements.length}개)</span>
+              <span>{showManage ? "▲" : "▼"}</span>
+            </button>
+            {showManage && (
+              <div className="flex flex-col gap-2">
+                {supplements.map((s) => (
+                  <div key={s.id} className="flex items-center justify-between bg-white rounded-2xl px-5 py-4 shadow">
+                    <span className="text-lg text-gray-800">{s.productName}</span>
+                    <button
+                      onClick={() => handleDelete(s.id)}
+                      disabled={deleting === s.id}
+                      className="text-red-400 hover:text-red-600 text-2xl font-bold px-2 disabled:opacity-40"
+                    >
+                      {deleting === s.id ? "..." : "×"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-4 mt-4">
           <Link
             href="/supplements"
             className="block w-full bg-white text-blue-600 text-xl font-bold py-5 rounded-2xl text-center border-2 border-blue-600 hover:bg-blue-50 transition"

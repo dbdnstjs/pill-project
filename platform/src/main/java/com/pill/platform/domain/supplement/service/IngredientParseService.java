@@ -24,7 +24,7 @@ public class IngredientParseService {
   private final SupplementIngredientRepository supplementIngredientRepository;
 
   private static final Pattern AMOUNT_PATTERN =
-      Pattern.compile("([\\d,]+(?:\\.\\d+)?)\\s*(mg|g|μg|mcg|IU|UI)", Pattern.CASE_INSENSITIVE);
+      Pattern.compile("([\\d,]+(?:\\.\\d+)?)\\s*(mg|g|μg|mcg|IU|UI|㎎|㎍|㎰)", Pattern.CASE_INSENSITIVE);
 
   private static final Map<String, String> ALIASES = new LinkedHashMap<>();
 
@@ -141,7 +141,9 @@ public class IngredientParseService {
   private String normalizeUnit(String unit) {
     return switch (unit.toLowerCase()) {
       case "iu", "ui" -> "IU";
-      case "mcg" -> "μg";
+      case "mcg", "㎍" -> "μg";
+      case "㎎" -> "mg";
+      case "㎰" -> "g";
       default -> unit;
     };
   }
