@@ -4,6 +4,7 @@ import com.pill.platform.domain.supplement.client.FoodSafetyApiClient;
 import com.pill.platform.domain.supplement.dto.SupplementResponse;
 import com.pill.platform.domain.supplement.dto.SupplementSearchResult;
 import com.pill.platform.domain.supplement.entity.Supplement;
+import com.pill.platform.domain.supplement.repository.SupplementIngredientRepository;
 import com.pill.platform.domain.supplement.repository.SupplementRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,12 @@ public class SupplementService {
   public SupplementResponse save(SupplementSearchResult result) {
     return supplementRepository
         .findByReportNo(result.reportNo())
-        .map(SupplementResponse::from)
+        .map(existing -> {
+          if (supplementIngredientRepository.findBySupplementId(existing.getId()).isEmpty()) {
+            ingredientParseService.parseAndSave(existing);
+          }
+          return SupplementResponse.from(existing);
+        })
         .orElseGet(
             () -> {
               Supplement supplement =
