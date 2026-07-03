@@ -116,8 +116,10 @@ public class NutritionService {
   }
 
   private String computeAgeGroup(Integer birthYear) {
-    if (birthYear == null) return "50-64";
+    if (birthYear == null) return "30-49";
     int age = LocalDate.now().getYear() - birthYear;
+    if (age < 30) return "19-29";
+    if (age < 50) return "30-49";
     if (age < 65) return "50-64";
     if (age < 75) return "65-74";
     return "75+";

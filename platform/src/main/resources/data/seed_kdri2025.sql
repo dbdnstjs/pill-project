@@ -53,17 +53,21 @@ WHERE ingredient_id IN (
 
 -- =====================================================
 -- 3. 영양소 기준치 삽입
--- gender: MALE / FEMALE  |  age_group: 50-64 / 65-74 / 75+
+-- gender: MALE / FEMALE  |  age_group: 19-29 / 30-49 / 50-64 / 65-74 / 75+
 -- =====================================================
 
--- 비타민 C (mg) — 모든 그룹 동일
+-- 비타민 C (mg)
 INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amount, upper_limit, unit)
 SELECT id, age_group, gender::text, rec, upper_val, 'mg'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',   100.0, 2000.0),
+    ('30-49','MALE',   100.0, 2000.0),
     ('50-64','MALE',   100.0, 2000.0),
     ('65-74','MALE',   100.0, 2000.0),
     ('75+',  'MALE',   100.0, 2000.0),
+    ('19-29','FEMALE', 100.0, 2000.0),
+    ('30-49','FEMALE', 100.0, 2000.0),
     ('50-64','FEMALE', 100.0, 2000.0),
     ('65-74','FEMALE', 100.0, 2000.0),
     ('75+',  'FEMALE', 100.0, 2000.0)
@@ -75,9 +79,13 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, upper_val, 'μg'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',    10.0, 100.0),
+    ('30-49','MALE',    10.0, 100.0),
     ('50-64','MALE',    10.0, 100.0),
     ('65-74','MALE',    15.0, 100.0),
     ('75+',  'MALE',    15.0, 100.0),
+    ('19-29','FEMALE',  10.0, 100.0),
+    ('30-49','FEMALE',  10.0, 100.0),
     ('50-64','FEMALE',  10.0, 100.0),
     ('65-74','FEMALE',  15.0, 100.0),
     ('75+',  'FEMALE',  15.0, 100.0)
@@ -89,9 +97,13 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, upper_val, 'μgRAE'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',   800.0, 3000.0),
+    ('30-49','MALE',   750.0, 3000.0),
     ('50-64','MALE',   750.0, 3000.0),
     ('65-74','MALE',   700.0, 3000.0),
     ('75+',  'MALE',   700.0, 3000.0),
+    ('19-29','FEMALE', 650.0, 3000.0),
+    ('30-49','FEMALE', 650.0, 3000.0),
     ('50-64','FEMALE', 600.0, 3000.0),
     ('65-74','FEMALE', 600.0, 3000.0),
     ('75+',  'FEMALE', 600.0, 3000.0)
@@ -102,8 +114,8 @@ WHERE ingredients.name = '비타민 A';
 INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amount, upper_limit, unit)
 SELECT id, age_group, gender, 12.0, 540.0, 'mg'
 FROM ingredients,
-  (VALUES ('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
-          ('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
+  (VALUES ('19-29','MALE'),('30-49','MALE'),('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
+          ('19-29','FEMALE'),('30-49','FEMALE'),('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
   ) AS t(age_group, gender)
 WHERE ingredients.name = '비타민 E';
 
@@ -112,9 +124,13 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, NULL, 'μg'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',   75.0),
+    ('30-49','MALE',   75.0),
     ('50-64','MALE',   75.0),
     ('65-74','MALE',   75.0),
     ('75+',  'MALE',   75.0),
+    ('19-29','FEMALE', 65.0),
+    ('30-49','FEMALE', 65.0),
     ('50-64','FEMALE', 65.0),
     ('65-74','FEMALE', 65.0),
     ('75+',  'FEMALE', 65.0)
@@ -126,9 +142,13 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, NULL, 'mg'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',   1.2),
+    ('30-49','MALE',   1.2),
     ('50-64','MALE',   1.2),
     ('65-74','MALE',   1.1),
     ('75+',  'MALE',   1.1),
+    ('19-29','FEMALE', 1.1),
+    ('30-49','FEMALE', 1.1),
     ('50-64','FEMALE', 1.1),
     ('65-74','FEMALE', 1.0),
     ('75+',  'FEMALE', 0.8)
@@ -140,9 +160,13 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, NULL, 'mg'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',   1.5),
+    ('30-49','MALE',   1.5),
     ('50-64','MALE',   1.5),
     ('65-74','MALE',   1.4),
     ('75+',  'MALE',   1.4),
+    ('19-29','FEMALE', 1.2),
+    ('30-49','FEMALE', 1.2),
     ('50-64','FEMALE', 1.2),
     ('65-74','FEMALE', 1.1),
     ('75+',  'FEMALE', 1.0)
@@ -154,9 +178,13 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, 50.0, 'mg'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',   1.5),
+    ('30-49','MALE',   1.5),
     ('50-64','MALE',   1.5),
     ('65-74','MALE',   1.5),
     ('75+',  'MALE',   1.5),
+    ('19-29','FEMALE', 1.4),
+    ('30-49','FEMALE', 1.4),
     ('50-64','FEMALE', 1.4),
     ('65-74','FEMALE', 1.4),
     ('75+',  'FEMALE', 1.4)
@@ -167,8 +195,8 @@ WHERE ingredients.name = '비타민 B6';
 INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amount, upper_limit, unit)
 SELECT id, age_group, gender, 2.4, NULL, 'μg'
 FROM ingredients,
-  (VALUES ('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
-          ('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
+  (VALUES ('19-29','MALE'),('30-49','MALE'),('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
+          ('19-29','FEMALE'),('30-49','FEMALE'),('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
   ) AS t(age_group, gender)
 WHERE ingredients.name = '비타민 B12';
 
@@ -176,8 +204,8 @@ WHERE ingredients.name = '비타민 B12';
 INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amount, upper_limit, unit)
 SELECT id, age_group, gender, 400.0, 1000.0, 'μgDFE'
 FROM ingredients,
-  (VALUES ('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
-          ('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
+  (VALUES ('19-29','MALE'),('30-49','MALE'),('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
+          ('19-29','FEMALE'),('30-49','FEMALE'),('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
   ) AS t(age_group, gender)
 WHERE ingredients.name = '엽산';
 
@@ -186,9 +214,13 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, 850.0, 'mg NE'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',   16.0),
+    ('30-49','MALE',   16.0),
     ('50-64','MALE',   14.0),
     ('65-74','MALE',   13.0),
     ('75+',  'MALE',   12.0),
+    ('19-29','FEMALE', 14.0),
+    ('30-49','FEMALE', 14.0),
     ('50-64','FEMALE', 13.0),
     ('65-74','FEMALE', 12.0),
     ('75+',  'FEMALE', 11.0)
@@ -200,9 +232,13 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, upper_val, 'mg'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',   800.0, 2500.0),
+    ('30-49','MALE',   800.0, 2500.0),
     ('50-64','MALE',   800.0, 2500.0),
     ('65-74','MALE',   800.0, 2500.0),
     ('75+',  'MALE',   800.0, 2500.0),
+    ('19-29','FEMALE', 700.0, 2500.0),
+    ('30-49','FEMALE', 700.0, 2500.0),
     ('50-64','FEMALE', 750.0, 2000.0),
     ('65-74','FEMALE', 750.0, 2000.0),
     ('75+',  'FEMALE', 750.0, 2000.0)
@@ -214,9 +250,13 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, 350.0, 'mg'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',   340.0),
+    ('30-49','MALE',   370.0),
     ('50-64','MALE',   380.0),
     ('65-74','MALE',   380.0),
     ('75+',  'MALE',   380.0),
+    ('19-29','FEMALE', 280.0),
+    ('30-49','FEMALE', 280.0),
     ('50-64','FEMALE', 280.0),
     ('65-74','FEMALE', 280.0),
     ('75+',  'FEMALE', 280.0)
@@ -228,12 +268,16 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, 45.0, 'mg'
 FROM ingredients,
   (VALUES
-    ('50-64','MALE',   8.0),
-    ('65-74','MALE',   8.0),
-    ('75+',  'MALE',   7.0),
-    ('50-64','FEMALE', 7.0),
-    ('65-74','FEMALE', 6.0),
-    ('75+',  'FEMALE', 6.0)
+    ('19-29','MALE',   10.0),
+    ('30-49','MALE',   10.0),
+    ('50-64','MALE',    8.0),
+    ('65-74','MALE',    8.0),
+    ('75+',  'MALE',    7.0),
+    ('19-29','FEMALE', 14.0),
+    ('30-49','FEMALE', 14.0),
+    ('50-64','FEMALE',  7.0),
+    ('65-74','FEMALE',  6.0),
+    ('75+',  'FEMALE',  6.0)
   ) AS t(age_group, gender, rec)
 WHERE ingredients.name = '철분';
 
@@ -242,9 +286,13 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, 35.0, 'mg'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',   10.0),
+    ('30-49','MALE',   10.0),
     ('50-64','MALE',   10.0),
     ('65-74','MALE',    9.0),
     ('75+',  'MALE',    9.0),
+    ('19-29','FEMALE',  8.0),
+    ('30-49','FEMALE',  8.0),
     ('50-64','FEMALE',  8.0),
     ('65-74','FEMALE',  7.0),
     ('75+',  'FEMALE',  7.0)
@@ -255,8 +303,8 @@ WHERE ingredients.name = '아연';
 INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amount, upper_limit, unit)
 SELECT id, age_group, gender, 60.0, 400.0, 'μg'
 FROM ingredients,
-  (VALUES ('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
-          ('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
+  (VALUES ('19-29','MALE'),('30-49','MALE'),('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
+          ('19-29','FEMALE'),('30-49','FEMALE'),('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
   ) AS t(age_group, gender)
 WHERE ingredients.name = '셀레늄';
 
@@ -264,8 +312,8 @@ WHERE ingredients.name = '셀레늄';
 INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amount, upper_limit, unit)
 SELECT id, age_group, gender, 150.0, 2400.0, 'μg'
 FROM ingredients,
-  (VALUES ('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
-          ('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
+  (VALUES ('19-29','MALE'),('30-49','MALE'),('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
+          ('19-29','FEMALE'),('30-49','FEMALE'),('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
   ) AS t(age_group, gender)
 WHERE ingredients.name = '요오드';
 
@@ -274,9 +322,13 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, 10000.0, 'μg'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',   800.0),
+    ('30-49','MALE',   800.0),
     ('50-64','MALE',   850.0),
     ('65-74','MALE',   800.0),
     ('75+',  'MALE',   800.0),
+    ('19-29','FEMALE', 650.0),
+    ('30-49','FEMALE', 650.0),
     ('50-64','FEMALE', 650.0),
     ('65-74','FEMALE', 600.0),
     ('75+',  'FEMALE', 600.0)
@@ -288,9 +340,13 @@ INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amoun
 SELECT id, age_group, gender, rec, upper_val, 'mg'
 FROM ingredients,
   (VALUES
+    ('19-29','MALE',   700.0, 3500.0),
+    ('30-49','MALE',   700.0, 3500.0),
     ('50-64','MALE',   650.0, 3500.0),
     ('65-74','MALE',   650.0, 3500.0),
     ('75+',  'MALE',   650.0, 3000.0),
+    ('19-29','FEMALE', 700.0, 3500.0),
+    ('30-49','FEMALE', 700.0, 3500.0),
     ('50-64','FEMALE', 650.0, 3500.0),
     ('65-74','FEMALE', 650.0, 3500.0),
     ('75+',  'FEMALE', 650.0, 3000.0)
@@ -301,17 +357,17 @@ WHERE ingredients.name = '인';
 INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amount, upper_limit, unit)
 SELECT id, age_group, gender, 250.0, NULL, 'mg'
 FROM ingredients,
-  (VALUES ('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
-          ('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
+  (VALUES ('19-29','MALE'),('30-49','MALE'),('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
+          ('19-29','FEMALE'),('30-49','FEMALE'),('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
   ) AS t(age_group, gender)
 WHERE ingredients.name = '오메가3';
 
--- 칼륨 (mg) — 모든 그룹 동일, 상한 없음(이뇨제 복용시 주의)
+-- 칼륨 (mg) — 모든 그룹 동일, 상한 없음
 INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amount, upper_limit, unit)
 SELECT id, age_group, gender, 3500.0, NULL, 'mg'
 FROM ingredients,
-  (VALUES ('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
-          ('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
+  (VALUES ('19-29','MALE'),('30-49','MALE'),('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
+          ('19-29','FEMALE'),('30-49','FEMALE'),('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
   ) AS t(age_group, gender)
 WHERE ingredients.name = '칼륨';
 
@@ -319,8 +375,8 @@ WHERE ingredients.name = '칼륨';
 INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amount, upper_limit, unit)
 SELECT id, age_group, gender, 10.0, NULL, 'mg'
 FROM ingredients,
-  (VALUES ('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
-          ('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
+  (VALUES ('19-29','MALE'),('30-49','MALE'),('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
+          ('19-29','FEMALE'),('30-49','FEMALE'),('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
   ) AS t(age_group, gender)
 WHERE ingredients.name = '루테인+지아잔틴';
 
@@ -328,8 +384,8 @@ WHERE ingredients.name = '루테인+지아잔틴';
 INSERT INTO nutrient_limits (ingredient_id, age_group, gender, recommended_amount, upper_limit, unit)
 SELECT id, age_group, gender, 100.0, NULL, 'mg'
 FROM ingredients,
-  (VALUES ('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
-          ('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
+  (VALUES ('19-29','MALE'),('30-49','MALE'),('50-64','MALE'),('65-74','MALE'),('75+','MALE'),
+          ('19-29','FEMALE'),('30-49','FEMALE'),('50-64','FEMALE'),('65-74','FEMALE'),('75+','FEMALE')
   ) AS t(age_group, gender)
 WHERE ingredients.name = '코엔자임Q10';
 
