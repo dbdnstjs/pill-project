@@ -28,6 +28,7 @@ public class SeedDataInitializer implements ApplicationRunner {
 
   @Override
   public void run(ApplicationArguments args) {
+    migrateSchema();
     if (ingredientRepository.count() == 0) {
       log.info("시드 데이터 초기화 시작");
       ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
@@ -41,6 +42,17 @@ public class SeedDataInitializer implements ApplicationRunner {
 
     migrateZeroAmounts();
     reparseMissingIngredients();
+  }
+
+  private void migrateSchema() {
+    try (java.sql.Connection conn = dataSource.getConnection();
+         java.sql.Statement stmt = conn.createStatement()) {
+      stmt.execute(
+          "ALTER TABLE supplement_ingredients ALTER COLUMN amount DROP NOT NULL");
+      log.info("스키마 마이그레이션: supplement_ingredients.amount NOT NULL 제약 제거");
+    } catch (Exception e) {
+      log.debug("amount 컬럼 마이그레이션 건너뜀 (이미 nullable): {}", e.getMessage());
+    }
   }
 
   private void migrateZeroAmounts() {
