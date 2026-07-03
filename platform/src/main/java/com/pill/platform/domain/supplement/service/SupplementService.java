@@ -1,6 +1,7 @@
 package com.pill.platform.domain.supplement.service;
 
 import com.pill.platform.domain.supplement.client.FoodSafetyApiClient;
+import com.pill.platform.domain.supplement.dto.SupplementIngredientInfo;
 import com.pill.platform.domain.supplement.dto.SupplementResponse;
 import com.pill.platform.domain.supplement.dto.SupplementSearchResult;
 import com.pill.platform.domain.supplement.entity.Supplement;
@@ -58,5 +59,13 @@ public class SupplementService {
         .findById(id)
         .map(SupplementResponse::from)
         .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 영양제입니다."));
+  }
+
+  public List<SupplementIngredientInfo> getIngredients(Long supplementId) {
+    return supplementIngredientRepository.findBySupplementId(supplementId)
+        .stream()
+        .map(si -> new SupplementIngredientInfo(
+            si.getIngredient().getName(), si.getAmount(), si.getUnit()))
+        .toList();
   }
 }

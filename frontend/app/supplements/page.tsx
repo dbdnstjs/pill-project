@@ -3,8 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { api, SupplementSearchResult } from "@/lib/api";
+import { api, SupplementSearchResult, SupplementIngredientInfo } from "@/lib/api";
 import BottomNav from "@/components/BottomNav";
+
+interface AmountModal {
+  nutrients: SupplementIngredientInfo[];
+  inputs: Record<string, { amount: string; unit: string }>;
+}
 
 export default function SupplementsPage() {
   const router = useRouter();
@@ -14,6 +19,8 @@ export default function SupplementsPage() {
   const [registering, setRegistering] = useState<string | null>(null);
   const [done, setDone] = useState<Set<string>>(new Set());
   const [error, setError] = useState("");
+  const [amountModal, setAmountModal] = useState<AmountModal | null>(null);
+  const [saving, setSaving] = useState(false);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -37,10 +44,36 @@ export default function SupplementsPage() {
       const saved = await api.saveSupplementToDB(item);
       await api.registerUserSupplement(saved.id);
       setDone((prev) => new Set(prev).add(item.reportNo));
+
+      // 파싱된 성분 중 함량 미입력 항목 확인
+      const ingredients = await api.getSupplementIngredients(saved.id);
+      const missing = ingredients.filter((i) => i.amount === null);
+      if (missing.length > 0) {
+        const inputs: Record<string, { amount: string; unit: string }> = {};
+        missing.forEach((i) => { inputs[i.name] = { amount: "", unit: "mg" }; });
+        setAmountModal({ nutrients: missing, inputs });
+      }
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "등록에 실패했습니다.");
     } finally {
       setRegistering(null);
+    }
+  }
+
+  async function handleSaveAmounts() {
+    if (!amountModal) return;
+    setSaving(true);
+    try {
+      for (const [name, { amount, unit }] of Object.entries(amountModal.inputs)) {
+        if (amount.trim() && !isNaN(Number(amount))) {
+          await api.updateIngredientAmount(name, Number(amount), unit);
+        }
+      }
+      setAmountModal(null);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "저장에 실패했습니다.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -135,6 +168,90 @@ export default function SupplementsPage() {
         )}
       </div>
       <BottomNav />
+
+      {/* 함량 입력 모달 */}
+      {amountModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 px-4 pb-6">
+          <div className="bg-white rounded-3xl w-full max-w-lg p-7 shadow-2xl">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">성분 함량 입력하기</h2>
+            <p className="text-base text-gray-500 mb-6">
+              제품 라벨을 확인하고 아래 성분의 함량을 입력해주세요.
+              <br />모르는 경우 비워두고 건너뛸 수 있습니다.
+            </p>
+
+            <div className="flex flex-col gap-4 mb-6 max-h-64 overflow-y-auto">
+              {amountModal.nutrients.map((n) => (
+                <div key={n.name}>
+                  <label className="text-lg font-semibold text-gray-700 mb-2 block">
+                    {n.name}
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="숫자 입력"
+                      value={amountModal.inputs[n.name]?.amount ?? ""}
+                      onChange={(e) =>
+                        setAmountModal((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                inputs: {
+                                  ...prev.inputs,
+                                  [n.name]: { ...prev.inputs[n.name], amount: e.target.value },
+                                },
+                              }
+                            : prev
+                        )
+                      }
+                      className="flex-1 border-2 border-gray-300 rounded-xl px-4 py-3 text-xl focus:border-blue-500 focus:outline-none"
+                    />
+                    <select
+                      value={amountModal.inputs[n.name]?.unit ?? "mg"}
+                      onChange={(e) =>
+                        setAmountModal((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                inputs: {
+                                  ...prev.inputs,
+                                  [n.name]: { ...prev.inputs[n.name], unit: e.target.value },
+                                },
+                              }
+                            : prev
+                        )
+                      }
+                      className="border-2 border-gray-300 rounded-xl px-3 py-3 text-xl focus:border-blue-500 focus:outline-none"
+                    >
+                      <option>mg</option>
+                      <option>μg</option>
+                      <option>g</option>
+                      <option>IU</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setAmountModal(null)}
+                className="flex-1 py-4 rounded-2xl border-2 border-gray-300 text-xl font-bold text-gray-600 hover:bg-gray-50 transition"
+              >
+                건너뛰기
+              </button>
+              <button
+                onClick={handleSaveAmounts}
+                disabled={saving}
+                className="flex-1 py-4 rounded-2xl bg-blue-600 text-white text-xl font-bold hover:bg-blue-700 transition disabled:opacity-50"
+              >
+                {saving ? "저장중..." : "저장"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

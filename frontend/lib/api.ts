@@ -92,6 +92,9 @@ export const api = {
 
   getNutritionSummary: () => request<NutritionSummary>("/api/nutrition/summary"),
 
+  getSupplementIngredients: (supplementId: number) =>
+    request<SupplementIngredientInfo[]>(`/api/supplements/${supplementId}/ingredients`),
+
   updateIngredientAmount: (ingredientName: string, amount: number, unit: string) =>
     request("/api/nutrition/ingredient-amount", {
       method: "PUT",
@@ -147,6 +150,12 @@ export interface NutritionSummary {
     percentage: number;
     hasAmount: boolean;
   }[];
+}
+
+export interface SupplementIngredientInfo {
+  name: string;
+  amount: number | null;
+  unit: string | null;
 }
 
 export interface AnalysisResponse {

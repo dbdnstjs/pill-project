@@ -1,5 +1,6 @@
 package com.pill.platform.domain.supplement.controller;
 
+import com.pill.platform.domain.supplement.dto.SupplementIngredientInfo;
 import com.pill.platform.domain.supplement.dto.SupplementResponse;
 import com.pill.platform.domain.supplement.dto.SupplementSearchResult;
 import com.pill.platform.domain.supplement.service.SupplementService;
@@ -41,5 +42,11 @@ public class SupplementController {
   @GetMapping("/{id}")
   public ResponseEntity<SupplementResponse> getById(@PathVariable Long id) {
     return ResponseEntity.ok(supplementService.getById(id));
+  }
+
+  /** 영양제에 파싱된 성분 목록 조회 (등록 후 함량 입력용) */
+  @GetMapping("/{id}/ingredients")
+  public ResponseEntity<List<SupplementIngredientInfo>> getIngredients(@PathVariable Long id) {
+    return ResponseEntity.ok(supplementService.getIngredients(id));
   }
 }
