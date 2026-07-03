@@ -14,7 +14,6 @@ import com.pill.platform.domain.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -98,21 +97,8 @@ public class NutritionService {
   }
 
   @Transactional
-  public void updateIngredientAmount(String email, String ingredientName, double amount, String unit) {
-    User user =
-        userRepository
-            .findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-    List<Long> supplementIds =
-        userSupplementRepository.findByUserIdAndIsActiveTrue(user.getId()).stream()
-            .map(us -> us.getSupplement().getId())
-            .toList();
-
-    if (supplementIds.isEmpty()) return;
-
-    supplementIngredientRepository.updateAmountForIngredient(
-        supplementIds, ingredientName, amount, unit);
+  public void updateIngredientAmount(Long supplementId, String ingredientName, double amount, String unit) {
+    supplementIngredientRepository.updateAmountForIngredient(supplementId, ingredientName, amount, unit);
   }
 
   private String computeAgeGroup(Integer birthYear) {

@@ -7,6 +7,7 @@ import { api, SupplementSearchResult, SupplementIngredientInfo } from "@/lib/api
 import BottomNav from "@/components/BottomNav";
 
 interface AmountModal {
+  supplementId: number;
   nutrients: SupplementIngredientInfo[];
   inputs: Record<string, { amount: string; unit: string }>;
 }
@@ -51,7 +52,7 @@ export default function SupplementsPage() {
       if (missing.length > 0) {
         const inputs: Record<string, { amount: string; unit: string }> = {};
         missing.forEach((i) => { inputs[i.name] = { amount: "", unit: "mg" }; });
-        setAmountModal({ nutrients: missing, inputs });
+        setAmountModal({ supplementId: saved.id, nutrients: missing, inputs });
       }
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "등록에 실패했습니다.");
@@ -66,7 +67,7 @@ export default function SupplementsPage() {
     try {
       for (const [name, { amount, unit }] of Object.entries(amountModal.inputs)) {
         if (amount.trim() && !isNaN(Number(amount))) {
-          await api.updateIngredientAmount(name, Number(amount), unit);
+          await api.updateIngredientAmount(amountModal.supplementId, name, Number(amount), unit);
         }
       }
       setAmountModal(null);

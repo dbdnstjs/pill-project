@@ -25,14 +25,13 @@ public class NutritionController {
     return ResponseEntity.ok(nutritionService.getSummary(userDetails.getUsername()));
   }
 
-  record UpdateAmountRequest(String ingredientName, double amount, String unit) {}
+  record UpdateAmountRequest(Long supplementId, String ingredientName, double amount, String unit) {}
 
   @PutMapping("/ingredient-amount")
   public ResponseEntity<Void> updateIngredientAmount(
-      @AuthenticationPrincipal UserDetails userDetails,
       @RequestBody UpdateAmountRequest req) {
     nutritionService.updateIngredientAmount(
-        userDetails.getUsername(), req.ingredientName(), req.amount(), req.unit());
+        req.supplementId(), req.ingredientName(), req.amount(), req.unit());
     return ResponseEntity.ok().build();
   }
 }

@@ -18,16 +18,15 @@ public interface SupplementIngredientRepository extends JpaRepository<Supplement
   @Query("UPDATE SupplementIngredient si SET si.amount = NULL WHERE si.amount = 0.0")
   int migrateZeroAmountsToNull();
 
-  /** 사용자 영양제 목록에서 특정 성분의 amount가 null인 행을 일괄 업데이트 */
+  /** 특정 영양제의 특정 성분 함량 업데이트 */
   @Modifying
   @Transactional
   @Query("UPDATE SupplementIngredient si SET si.amount = :amount, si.unit = :unit " +
-         "WHERE si.supplement.id IN :supplementIds " +
+         "WHERE si.supplement.id = :supplementId " +
          "AND si.ingredient.id IN " +
-         "  (SELECT i.id FROM Ingredient i WHERE i.name = :ingredientName) " +
-         "AND si.amount IS NULL")
+         "  (SELECT i.id FROM Ingredient i WHERE i.name = :ingredientName)")
   int updateAmountForIngredient(
-      @Param("supplementIds") List<Long> supplementIds,
+      @Param("supplementId") Long supplementId,
       @Param("ingredientName") String ingredientName,
       @Param("amount") Double amount,
       @Param("unit") String unit);
