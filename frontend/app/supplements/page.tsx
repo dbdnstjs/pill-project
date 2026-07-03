@@ -192,6 +192,7 @@ export default function SupplementsPage() {
                       min="0"
                       step="any"
                       placeholder="숫자 입력"
+                      onWheel={(e) => e.currentTarget.blur()}
                       value={amountModal.inputs[n.name]?.amount ?? ""}
                       onChange={(e) =>
                         setAmountModal((prev) =>

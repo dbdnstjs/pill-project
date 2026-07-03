@@ -84,6 +84,7 @@ export default function SignupPage() {
               onChange={(e) => setBirthYear(e.target.value)}
               placeholder="예: 1960"
               min={1930}
+              onWheel={(e) => e.currentTarget.blur()}
               max={2005}
               className="w-full border-2 border-gray-300 rounded-xl px-5 py-4 text-xl focus:border-blue-500 focus:outline-none"
             />

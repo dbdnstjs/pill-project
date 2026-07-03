@@ -201,6 +201,7 @@ export default function NutritionPage() {
                 value={editAmount}
                 onChange={(e) => setEditAmount(e.target.value)}
                 placeholder="예: 500"
+                onWheel={(e) => e.currentTarget.blur()}
                 className="flex-1 border-2 border-gray-300 rounded-xl px-4 py-4 text-xl focus:border-blue-500 focus:outline-none"
                 min="0"
                 step="any"
