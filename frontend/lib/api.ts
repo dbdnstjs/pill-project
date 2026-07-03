@@ -92,6 +92,12 @@ export const api = {
 
   getNutritionSummary: () => request<NutritionSummary>("/api/nutrition/summary"),
 
+  updateIngredientAmount: (ingredientName: string, amount: number, unit: string) =>
+    request("/api/nutrition/ingredient-amount", {
+      method: "PUT",
+      body: JSON.stringify({ ingredientName, amount, unit }),
+    }),
+
   getRecommendations: (symptom: string) =>
     request<RecommendationResponse>(`/api/recommendations?symptom=${symptom}`),
 
@@ -139,6 +145,7 @@ export interface NutritionSummary {
     recommended: number | null;
     upperLimit: number | null;
     percentage: number;
+    hasAmount: boolean;
   }[];
 }
 

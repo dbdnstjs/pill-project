@@ -10,5 +10,6 @@ public record NutritionSummaryResponse(
       double intake,
       Double recommended,
       Double upperLimit,
-      int percentage) {}
+      int percentage,
+      boolean hasAmount) {}
 }

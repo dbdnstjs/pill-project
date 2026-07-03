@@ -32,7 +32,7 @@ public class SupplementIngredient {
   @JoinColumn(name = "ingredient_id", nullable = false)
   private Ingredient ingredient;
 
-  @Column(nullable = false)
+  @Column(nullable = true)
   private Double amount;
 
   @Column(length = 20)

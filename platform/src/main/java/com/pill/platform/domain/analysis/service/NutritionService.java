@@ -39,8 +39,23 @@ public class NutritionService {
     String ageGroup = computeAgeGroup(user.getBirthYear());
     Gender gender = user.getGender() != null ? user.getGender() : Gender.MALE;
 
-    Map<String, Double> intakeMap = computeIntake(user);
-    Map<String, String> unitMap = computeUnits(user);
+    Map<String, Double> intakeMap = new LinkedHashMap<>();
+    Map<String, String> unitMap = new LinkedHashMap<>();
+    Map<String, Boolean> hasAmountMap = new LinkedHashMap<>();
+
+    for (UserSupplement us : userSupplementRepository.findByUserIdAndIsActiveTrue(user.getId())) {
+      for (SupplementIngredient si :
+          supplementIngredientRepository.findBySupplementId(us.getSupplement().getId())) {
+        String name = si.getIngredient().getName();
+        unitMap.putIfAbsent(name, si.getUnit());
+        if (si.getAmount() != null) {
+          intakeMap.merge(name, si.getAmount(), (a, b) -> a + b);
+          hasAmountMap.put(name, true);
+        } else {
+          hasAmountMap.putIfAbsent(name, false);
+        }
+      }
+    }
 
     List<NutrientLimit> limits = nutrientLimitRepository.findByAgeGroupAndGender(ageGroup, gender);
     Map<String, NutrientLimit> limitMap = new LinkedHashMap<>();
@@ -49,46 +64,55 @@ public class NutritionService {
     }
 
     List<NutrientItem> items = new ArrayList<>();
-    for (Map.Entry<String, Double> entry : intakeMap.entrySet()) {
-      String name = entry.getKey();
-      double intake = entry.getValue();
+    for (String name : hasAmountMap.keySet()) {
+      boolean hasAmount = hasAmountMap.get(name);
+      double intake = intakeMap.getOrDefault(name, 0.0);
       String unit = unitMap.get(name);
       NutrientLimit limit = limitMap.get(name);
 
       Double recommended = limit != null ? limit.getRecommendedAmount() : null;
       Double upperLimit = limit != null ? limit.getUpperLimit() : null;
       int pct =
-          (recommended != null && recommended > 0)
+          (hasAmount && recommended != null && recommended > 0)
               ? (int) Math.min((intake / recommended) * 100, 300)
               : 0;
 
-      items.add(new NutrientItem(name, unit, intake, recommended, upperLimit, pct));
+      items.add(new NutrientItem(name, unit, intake, recommended, upperLimit, pct, hasAmount));
     }
 
     return new NutritionSummaryResponse(ageGroup, gender.name(), items);
   }
 
-  /** 성분별 합산 섭취량 계산 */
+  /** 성분별 합산 섭취량 계산 (amount null 은 0으로 처리) */
   public Map<String, Double> computeIntake(User user) {
     Map<String, Double> intakeMap = new LinkedHashMap<>();
     for (UserSupplement us : userSupplementRepository.findByUserIdAndIsActiveTrue(user.getId())) {
       for (SupplementIngredient si :
           supplementIngredientRepository.findBySupplementId(us.getSupplement().getId())) {
-        intakeMap.merge(si.getIngredient().getName(), si.getAmount(), Double::sum);
+        if (si.getAmount() != null) {
+          intakeMap.merge(si.getIngredient().getName(), si.getAmount(), (a, b) -> a + b);
+        }
       }
     }
     return intakeMap;
   }
 
-  private Map<String, String> computeUnits(User user) {
-    Map<String, String> unitMap = new LinkedHashMap<>();
-    for (UserSupplement us : userSupplementRepository.findByUserIdAndIsActiveTrue(user.getId())) {
-      for (SupplementIngredient si :
-          supplementIngredientRepository.findBySupplementId(us.getSupplement().getId())) {
-        unitMap.putIfAbsent(si.getIngredient().getName(), si.getUnit());
-      }
-    }
-    return unitMap;
+  @Transactional
+  public void updateIngredientAmount(String email, String ingredientName, double amount, String unit) {
+    User user =
+        userRepository
+            .findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+    List<Long> supplementIds =
+        userSupplementRepository.findByUserIdAndIsActiveTrue(user.getId()).stream()
+            .map(us -> us.getSupplement().getId())
+            .toList();
+
+    if (supplementIds.isEmpty()) return;
+
+    supplementIngredientRepository.updateAmountForIngredient(
+        supplementIds, ingredientName, amount, unit);
   }
 
   private String computeAgeGroup(Integer birthYear) {

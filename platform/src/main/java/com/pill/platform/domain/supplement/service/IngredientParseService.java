@@ -130,7 +130,7 @@ public class IngredientParseService {
               SupplementIngredient.builder()
                   .supplement(supplement)
                   .ingredient(ingredient)
-                  .amount(0.0)
+                  .amount(null)
                   .unit(null)
                   .build()));
     }

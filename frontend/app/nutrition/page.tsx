@@ -11,6 +11,8 @@ const AGE_LABEL: Record<string, string> = {
   "75+": "75세 이상",
 };
 
+const UNITS = ["mg", "μg", "g", "IU"];
+
 function BarColor(pct: number): string {
   if (pct >= 150) return "bg-red-500";
   if (pct >= 100) return "bg-orange-400";
@@ -31,6 +33,11 @@ export default function NutritionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [editTarget, setEditTarget] = useState<string | null>(null);
+  const [editAmount, setEditAmount] = useState("");
+  const [editUnit, setEditUnit] = useState("mg");
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     api
       .getNutritionSummary()
@@ -40,6 +47,29 @@ export default function NutritionPage() {
       )
       .finally(() => setLoading(false));
   }, []);
+
+  function openEdit(name: string, unit: string | null) {
+    setEditTarget(name);
+    setEditAmount("");
+    setEditUnit(unit || "mg");
+  }
+
+  async function handleSave() {
+    if (!editTarget || !editAmount) return;
+    const amount = parseFloat(editAmount);
+    if (isNaN(amount) || amount <= 0) return;
+    setSaving(true);
+    try {
+      await api.updateIngredientAmount(editTarget, amount, editUnit);
+      const refreshed = await api.getNutritionSummary();
+      setData(refreshed);
+      setEditTarget(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "저장에 실패했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -91,31 +121,44 @@ export default function NutritionPage() {
                 {data.nutrients.map((n) => {
                   const barColor = BarColor(n.percentage);
                   const status = StatusText(n.percentage);
-                  const barWidth = Math.min(n.percentage, 100);
+                  const barWidth = n.hasAmount ? Math.min(n.percentage, 100) : 0;
                   return (
                     <div key={n.name} className="bg-white rounded-2xl p-6 shadow">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xl font-bold text-gray-800">{n.name}</span>
-                        <span className={`text-lg font-semibold ${status.color}`}>
-                          {status.text}
-                        </span>
+                        {n.hasAmount ? (
+                          <span className={`text-lg font-semibold ${status.color}`}>
+                            {status.text}
+                          </span>
+                        ) : (
+                          <span className="text-base text-gray-400">함량 미입력</span>
+                        )}
                       </div>
 
                       <div className="w-full bg-gray-100 rounded-full h-5 mb-3">
                         <div
-                          className={`h-5 rounded-full transition-all ${barColor}`}
+                          className={`h-5 rounded-full transition-all ${n.hasAmount ? barColor : "bg-gray-300"}`}
                           style={{ width: `${barWidth}%` }}
                         />
                       </div>
 
-                      <div className="flex justify-between text-base text-gray-500">
+                      <div className="flex justify-between items-center text-base text-gray-500">
                         <span>
                           현재:{" "}
-                          <strong className="text-gray-800">
-                            {n.intake.toFixed(1)} {n.unit}
-                          </strong>
+                          {n.hasAmount ? (
+                            <strong className="text-gray-800">
+                              {n.intake.toFixed(1)} {n.unit}
+                            </strong>
+                          ) : (
+                            <button
+                              onClick={() => openEdit(n.name, n.unit)}
+                              className="font-semibold text-blue-500 underline underline-offset-2"
+                            >
+                              미입력 — 직접 입력하기
+                            </button>
+                          )}
                         </span>
-                        {n.recommended && (
+                        {n.hasAmount && n.recommended && (
                           <span>
                             1일 권장:{" "}
                             <strong>
@@ -124,7 +167,7 @@ export default function NutritionPage() {
                             ({n.percentage}%)
                           </span>
                         )}
-                        {n.upperLimit && (
+                        {n.hasAmount && n.upperLimit && (
                           <span className="text-red-400">
                             상한: {n.upperLimit} {n.unit}
                           </span>
@@ -137,11 +180,62 @@ export default function NutritionPage() {
             )}
 
             <p className="text-center text-base text-gray-400 mt-8">
-              * KDRI 2025 한국인 영양소 섭취기준 기반
+              * KDRI 2025 기반 · 라벨 표시량 기준 추정치이며, 함량 미표기 성분은 직접 입력해 주세요
             </p>
           </>
         )}
       </div>
+
+      {/* 입력 모달 */}
+      {editTarget && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-6">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-xl">
+            <h2 className="text-2xl font-bold text-gray-800 mb-1">{editTarget}</h2>
+            <p className="text-lg text-gray-500 mb-6">
+              제품 라벨의 1일 섭취량을 입력해 주세요
+            </p>
+
+            <div className="flex gap-3 mb-6">
+              <input
+                type="number"
+                value={editAmount}
+                onChange={(e) => setEditAmount(e.target.value)}
+                placeholder="예: 500"
+                className="flex-1 border-2 border-gray-300 rounded-xl px-4 py-4 text-xl focus:border-blue-500 focus:outline-none"
+                min="0"
+                step="any"
+                autoFocus
+              />
+              <select
+                value={editUnit}
+                onChange={(e) => setEditUnit(e.target.value)}
+                className="border-2 border-gray-300 rounded-xl px-3 py-4 text-xl focus:border-blue-500 focus:outline-none"
+              >
+                {UNITS.map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEditTarget(null)}
+                className="flex-1 border-2 border-gray-300 text-gray-600 text-xl font-bold py-4 rounded-xl hover:bg-gray-50 transition"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving || !editAmount}
+                className="flex-1 bg-blue-600 text-white text-xl font-bold py-4 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition"
+              >
+                {saving ? "저장 중..." : "저장"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </main>
   );

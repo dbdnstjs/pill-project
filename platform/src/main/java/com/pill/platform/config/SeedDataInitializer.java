@@ -14,6 +14,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -39,7 +40,16 @@ public class SeedDataInitializer implements ApplicationRunner {
       log.info("시드 데이터 이미 존재 ({} 건)", ingredientRepository.count());
     }
 
+    migrateZeroAmounts();
     reparseMissingIngredients();
+  }
+
+  @Transactional
+  protected void migrateZeroAmounts() {
+    int updated = supplementIngredientRepository.migrateZeroAmountsToNull();
+    if (updated > 0) {
+      log.info("amount=0.0 → null 마이그레이션 완료: {} 건", updated);
+    }
   }
 
   private void reparseMissingIngredients() {
