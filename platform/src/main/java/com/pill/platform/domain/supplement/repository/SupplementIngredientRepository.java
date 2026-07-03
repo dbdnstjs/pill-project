@@ -23,7 +23,8 @@ public interface SupplementIngredientRepository extends JpaRepository<Supplement
   @Transactional
   @Query("UPDATE SupplementIngredient si SET si.amount = :amount, si.unit = :unit " +
          "WHERE si.supplement.id IN :supplementIds " +
-         "AND si.ingredient.name = :ingredientName " +
+         "AND si.ingredient.id IN " +
+         "  (SELECT i.id FROM Ingredient i WHERE i.name = :ingredientName) " +
          "AND si.amount IS NULL")
   int updateAmountForIngredient(
       @Param("supplementIds") List<Long> supplementIds,

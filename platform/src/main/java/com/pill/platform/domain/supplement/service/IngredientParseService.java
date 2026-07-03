@@ -150,7 +150,6 @@ public class IngredientParseService {
       case "iu", "ui" -> "IU";
       case "mcg", "㎍" -> "μg";
       case "㎎" -> "mg";
-      case "㎰" -> "g";
       default -> unit;
     };
   }

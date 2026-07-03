@@ -98,14 +98,18 @@ export default function AnalysisPage() {
 
         {result && (
           <div className="flex flex-col gap-6">
-            <div
-              className={`bg-white rounded-3xl p-8 shadow border-2 ${RISK_LABEL[result.overallRisk].color}`}
-            >
-              <p className="text-lg font-semibold text-gray-500 mb-1">전체 위험도</p>
-              <p className={`text-3xl font-bold ${RISK_LABEL[result.overallRisk].color.split(" ")[0]}`}>
-                {RISK_LABEL[result.overallRisk].text}
-              </p>
-            </div>
+            {(() => {
+              const riskLabel = RISK_LABEL[result.overallRisk as keyof typeof RISK_LABEL]
+                ?? { text: result.overallRisk, color: "text-gray-700 bg-gray-50 border-gray-300" };
+              return (
+                <div className={`bg-white rounded-3xl p-8 shadow border-2 ${riskLabel.color}`}>
+                  <p className="text-lg font-semibold text-gray-500 mb-1">전체 위험도</p>
+                  <p className={`text-3xl font-bold ${riskLabel.color.split(" ")[0]}`}>
+                    {riskLabel.text}
+                  </p>
+                </div>
+              );
+            })()}
 
             <div className="bg-white rounded-3xl p-8 shadow">
               <p className="text-lg font-semibold text-gray-500 mb-3">종합 평가</p>
@@ -116,7 +120,8 @@ export default function AnalysisPage() {
               <div className="flex flex-col gap-4">
                 <h2 className="text-2xl font-bold text-gray-700">상세 상호작용</h2>
                 {result.interactions.map((item, i) => {
-                  const label = STATUS_LABEL[item.status];
+                  const label = STATUS_LABEL[item.status as keyof typeof STATUS_LABEL]
+                    ?? { text: item.status, color: "bg-gray-100 text-gray-800 border-gray-300" };
                   return (
                     <div key={i} className="bg-white rounded-2xl p-6 shadow">
                       <div className="flex items-center gap-3 mb-3">

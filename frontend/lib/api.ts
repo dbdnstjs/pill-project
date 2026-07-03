@@ -112,7 +112,7 @@ export const api = {
       body: JSON.stringify({
         userSupplementId,
         dosageScheduleId,
-        takenAt: new Date().toISOString(),
+        takenAt: new Date().toISOString().slice(0, 23),
         isTaken,
       }),
     }),
@@ -140,7 +140,7 @@ export interface NutritionSummary {
   gender: string;
   nutrients: {
     name: string;
-    unit: string;
+    unit: string | null;
     intake: number;
     recommended: number | null;
     upperLimit: number | null;
