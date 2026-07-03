@@ -6,8 +6,6 @@
 -- 멱등성 보장: 여러 번 실행해도 안전
 -- =====================================================
 
-BEGIN;
-
 -- =====================================================
 -- 1. 영양소(ingredients) 업서트
 -- =====================================================
@@ -335,10 +333,3 @@ FROM ingredients,
   ) AS t(age_group, gender)
 WHERE ingredients.name = '코엔자임Q10';
 
-COMMIT;
-
--- 결과 확인
-SELECT i.name, n.gender, n.age_group, n.recommended_amount, n.upper_limit, n.unit
-FROM nutrient_limits n
-JOIN ingredients i ON i.id = n.ingredient_id
-ORDER BY i.name, n.gender, n.age_group;
