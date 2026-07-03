@@ -23,10 +23,13 @@ public class RestClientConfig {
   }
 
   @Bean
-  RestClient aiServerRestClient(@Value("${ai.server.url}") String aiServerUrl) {
+  RestClient geminiRestClient() {
     SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-    factory.setConnectTimeout(Duration.ofSeconds(5));
-    factory.setReadTimeout(Duration.ofSeconds(30));
-    return RestClient.builder().baseUrl(aiServerUrl).requestFactory(factory).build();
+    factory.setConnectTimeout(Duration.ofSeconds(10));
+    factory.setReadTimeout(Duration.ofSeconds(60));
+    return RestClient.builder()
+        .baseUrl("https://generativelanguage.googleapis.com/v1beta/models")
+        .requestFactory(factory)
+        .build();
   }
 }
