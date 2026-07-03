@@ -180,7 +180,7 @@ export default function SupplementsPage() {
               <br />모르는 경우 비워두고 건너뛸 수 있습니다.
             </p>
 
-            <div className="flex flex-col gap-4 mb-6 max-h-64 overflow-y-auto">
+            <div className="flex flex-col gap-4 mb-6 max-h-64 overflow-y-auto pr-2 pt-1">
               {amountModal.nutrients.map((n) => (
                 <div key={n.name}>
                   <label className="text-lg font-semibold text-gray-700 mb-2 block">
