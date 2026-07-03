@@ -95,7 +95,7 @@ export const api = {
   getSupplementIngredients: (supplementId: number) =>
     request<SupplementIngredientInfo[]>(`/api/supplements/${supplementId}/ingredients`),
 
-  updateIngredientAmount: (supplementId: number, ingredientName: string, amount: number, unit: string) =>
+  updateIngredientAmount: (supplementId: number | null, ingredientName: string, amount: number, unit: string) =>
     request("/api/nutrition/ingredient-amount", {
       method: "PUT",
       body: JSON.stringify({ supplementId, ingredientName, amount, unit }),

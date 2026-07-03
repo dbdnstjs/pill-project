@@ -30,4 +30,17 @@ public interface SupplementIngredientRepository extends JpaRepository<Supplement
       @Param("ingredientName") String ingredientName,
       @Param("amount") Double amount,
       @Param("unit") String unit);
+
+  /** 사용자의 모든 활성 영양제에서 특정 성분 함량 업데이트 (영양소 페이지용) */
+  @Modifying
+  @Transactional
+  @Query("UPDATE SupplementIngredient si SET si.amount = :amount, si.unit = :unit " +
+         "WHERE si.supplement.id IN :supplementIds " +
+         "AND si.ingredient.id IN " +
+         "  (SELECT i.id FROM Ingredient i WHERE i.name = :ingredientName)")
+  int updateAmountForIngredientAcrossSupplements(
+      @Param("supplementIds") List<Long> supplementIds,
+      @Param("ingredientName") String ingredientName,
+      @Param("amount") Double amount,
+      @Param("unit") String unit);
 }

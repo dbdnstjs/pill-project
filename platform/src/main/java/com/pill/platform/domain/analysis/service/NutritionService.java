@@ -102,6 +102,17 @@ public class NutritionService {
     supplementIngredientRepository.updateAmountForIngredient(supplementId, ingredientName, amount, unit);
   }
 
+  @Transactional
+  public void updateIngredientAmountForUser(String email, String ingredientName, double amount, String unit) {
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    List<Long> supplementIds = userSupplementRepository.findByUserIdAndIsActiveTrue(user.getId())
+        .stream().map(us -> us.getSupplement().getId()).toList();
+    if (supplementIds.isEmpty()) return;
+    supplementIngredientRepository.updateAmountForIngredientAcrossSupplements(
+        supplementIds, ingredientName, amount, unit);
+  }
+
   private String computeAgeGroup(Integer birthYear) {
     if (birthYear == null) return "30-49";
     int age = LocalDate.now().getYear() - birthYear;

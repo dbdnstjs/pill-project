@@ -29,9 +29,15 @@ public class NutritionController {
 
   @PutMapping("/ingredient-amount")
   public ResponseEntity<Void> updateIngredientAmount(
+      @AuthenticationPrincipal UserDetails userDetails,
       @RequestBody UpdateAmountRequest req) {
-    nutritionService.updateIngredientAmount(
-        req.supplementId(), req.ingredientName(), req.amount(), req.unit());
+    if (req.supplementId() != null) {
+      nutritionService.updateIngredientAmount(
+          req.supplementId(), req.ingredientName(), req.amount(), req.unit());
+    } else {
+      nutritionService.updateIngredientAmountForUser(
+          userDetails.getUsername(), req.ingredientName(), req.amount(), req.unit());
+    }
     return ResponseEntity.ok().build();
   }
 }

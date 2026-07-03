@@ -60,7 +60,7 @@ export default function NutritionPage() {
     if (isNaN(amount) || amount <= 0) return;
     setSaving(true);
     try {
-      await api.updateIngredientAmount(editTarget, amount, editUnit);
+      await api.updateIngredientAmount(null, editTarget, amount, editUnit);
       const refreshed = await api.getNutritionSummary();
       setData(refreshed);
       setEditTarget(null);
