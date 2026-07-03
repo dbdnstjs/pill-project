@@ -1,13 +1,11 @@
 package com.pill.platform.domain.supplement.service;
 
-import com.pill.platform.domain.supplement.entity.Ingredient;
 import com.pill.platform.domain.supplement.entity.Supplement;
 import com.pill.platform.domain.supplement.entity.SupplementIngredient;
 import com.pill.platform.domain.supplement.repository.IngredientRepository;
 import com.pill.platform.domain.supplement.repository.SupplementIngredientRepository;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -83,49 +81,58 @@ public class IngredientParseService {
     String[] segments = raw.split("[,;\\[\\]]");
     Map<String, double[]> aggregated = new LinkedHashMap<>();
     Map<String, String> unitAgg = new LinkedHashMap<>();
+    Map<String, Boolean> nameOnly = new LinkedHashMap<>();
 
     for (String segment : segments) {
       String seg = segment.trim();
       if (seg.isBlank()) continue;
 
       Matcher matcher = AMOUNT_PATTERN.matcher(seg);
-      if (!matcher.find()) continue;
-
-      double amount;
-      try {
-        amount = Double.parseDouble(matcher.group(1).replace(",", ""));
-      } catch (NumberFormatException e) {
-        continue;
+      if (matcher.find()) {
+        double amount;
+        try {
+          amount = Double.parseDouble(matcher.group(1).replace(",", ""));
+        } catch (NumberFormatException e) {
+          continue;
+        }
+        String unit = normalizeUnit(matcher.group(2));
+        String textBefore =
+            seg.substring(0, matcher.start()).toLowerCase().replaceAll("[()（）]", " ").trim();
+        String standardName = findStandardName(textBefore);
+        if (standardName == null) continue;
+        aggregated.merge(standardName, new double[]{amount}, (a, b) -> { a[0] += b[0]; return a; });
+        unitAgg.putIfAbsent(standardName, unit);
+        nameOnly.remove(standardName);
+      } else {
+        String text = seg.toLowerCase().replaceAll("[()（）]", " ").trim();
+        String standardName = findStandardName(text);
+        if (standardName != null && !aggregated.containsKey(standardName)) {
+          nameOnly.put(standardName, true);
+        }
       }
-      String unit = normalizeUnit(matcher.group(2));
-      String textBefore =
-          seg.substring(0, matcher.start()).toLowerCase().replaceAll("[()（）]", " ").trim();
-
-      String standardName = findStandardName(textBefore);
-      if (standardName == null) continue;
-
-      aggregated.merge(
-          standardName,
-          new double[] {amount},
-          (a, b) -> {
-            a[0] += b[0];
-            return a;
-          });
-      unitAgg.putIfAbsent(standardName, unit);
     }
 
     for (Map.Entry<String, double[]> entry : aggregated.entrySet()) {
       String stdName = entry.getKey();
-      Optional<Ingredient> ingredientOpt = ingredientRepository.findByName(stdName);
-      if (ingredientOpt.isEmpty()) continue;
+      ingredientRepository.findByName(stdName).ifPresent(ingredient ->
+          supplementIngredientRepository.save(
+              SupplementIngredient.builder()
+                  .supplement(supplement)
+                  .ingredient(ingredient)
+                  .amount(entry.getValue()[0])
+                  .unit(unitAgg.get(stdName))
+                  .build()));
+    }
 
-      supplementIngredientRepository.save(
-          SupplementIngredient.builder()
-              .supplement(supplement)
-              .ingredient(ingredientOpt.get())
-              .amount(entry.getValue()[0])
-              .unit(unitAgg.get(stdName))
-              .build());
+    for (String stdName : nameOnly.keySet()) {
+      ingredientRepository.findByName(stdName).ifPresent(ingredient ->
+          supplementIngredientRepository.save(
+              SupplementIngredient.builder()
+                  .supplement(supplement)
+                  .ingredient(ingredient)
+                  .amount(0.0)
+                  .unit(null)
+                  .build()));
     }
   }
 
