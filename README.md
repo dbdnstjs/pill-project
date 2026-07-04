@@ -2,6 +2,8 @@
 
 복용 중인 영양제의 성분을 분석해 과다섭취를 방지하고, AI 기반 궁합 분석과 자동 복용 시간표를 제공하는 웹 애플리케이션입니다.
 
+**배포 주소:** https://pill-project-kohl.vercel.app
+
 ---
 
 ## 주요 기능
@@ -22,7 +24,7 @@
 ```
 Frontend   Next.js 16 · React 19 · TypeScript · Tailwind CSS 4
 Backend    Spring Boot 3.5 · Java 17 · Spring Security · JPA/Hibernate
-AI Server  FastAPI · Google Gemini API (google-genai)
+AI         Google Gemini 2.5 Flash API (Spring Boot에서 직접 호출)
 Database   PostgreSQL 15 (Docker)
 Auth       JWT (HMAC-SHA256, Stateless)
 ```
@@ -36,11 +38,11 @@ Auth       JWT (HMAC-SHA256, Stateless)
         │ HTTP + JWT
         ▼
 Spring Boot 백엔드 (:8080)
-        │
         ├── PostgreSQL DB (Docker :5432)
-        └── FastAPI AI 서버 (:8000)
-                    └── Google Gemini API
+        └── Google Gemini 2.5 Flash API (직접 호출)
 ```
+
+> 초기에는 AI 분석을 별도 Python(FastAPI) 서버로 분리했으나, 운영 중 단일 장애점(SPOF)·비용 문제로 Spring Boot에서 Gemini REST API를 직접 호출하는 구조로 전환했습니다.
 
 ---
 
@@ -48,7 +50,6 @@ Spring Boot 백엔드 (:8080)
 
 ### 사전 준비
 - Java 17+
-- Python 3.11+
 - Node.js 20+
 - Docker Desktop
 
@@ -72,32 +73,19 @@ docker cp platform/src/main/resources/data/seed_kdri2025.sql pill-db:/tmp/seed.s
 docker exec -i pill-db psql -U pilluser -d pilldb -f /tmp/seed.sql
 ```
 
-### 3. AI 서버 실행
-
-```bash
-cd ai-server
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-pip install -r requirements.txt
-
-# .env 파일 생성
-echo GEMINI_API_KEY=your_gemini_api_key > .env
-
-uvicorn app.main:app --reload --port 8000
-```
-
-### 4. Spring Boot 백엔드 실행
+### 3. Spring Boot 백엔드 실행
 
 ```bash
 cd platform
 
-# application-local.properties에 식품안전나라 API 키 추가
+# application-local.properties에 아래 키 추가
 # openapi.secret-key=YOUR_FOODSAFETY_API_KEY
+# gemini.api.key=YOUR_GEMINI_API_KEY
 
 ./gradlew bootRun
 ```
 
-### 5. 프론트엔드 실행
+### 4. 프론트엔드 실행
 
 ```bash
 cd frontend
@@ -124,13 +112,7 @@ jwt.expiration=86400000
 openapi.base-url=http://openapi.foodsafetykorea.go.kr/api
 openapi.secret-key=YOUR_FOODSAFETY_API_KEY
 
-ai.server.url=http://localhost:8000
-```
-
-### FastAPI AI 서버 (`.env`)
-
-```env
-GEMINI_API_KEY=your_gemini_api_key
+gemini.api.key=YOUR_GEMINI_API_KEY
 ```
 
 ### Next.js (`.env.local`)
@@ -148,9 +130,8 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 ```
 1. Railway에 PostgreSQL 인스턴스 생성
 2. KDRI 2025 시드 데이터 삽입 (Railway 콘솔에서 SQL 실행)
-3. FastAPI AI 서버 배포 → URL 확보
-4. Spring Boot 백엔드 배포 (환경변수 설정)
-5. Vercel에 Next.js 프론트엔드 배포
+3. Spring Boot 백엔드 배포 (환경변수 설정)
+4. Vercel에 Next.js 프론트엔드 배포
 ```
 
 ### Railway — Spring Boot 환경변수
@@ -160,7 +141,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 | `DATABASE_URL` | Railway PostgreSQL 연결 문자열 (자동 제공) |
 | `JWT_SECRET` | 32자 이상 랜덤 문자열 |
 | `OPENAPI_SECRET_KEY` | 식품안전나라 API 키 |
-| `AI_SERVER_URL` | FastAPI 배포 URL |
+| `GEMINI_API_KEY` | Google Gemini API 키 |
 
 ### Vercel — 환경변수
 
@@ -257,6 +238,7 @@ nutrient_limits        KDRI 2025 기준값 (연령대·성별별 권장량·상�
 ## 알려진 제한 사항
 
 - 식품안전나라 API가 점검 중일 때 영양제 검색 불가 (외부 서비스 의존)
+- 공공 API가 함량을 정형 데이터로 제공하지 않아, 원문 파싱은 근본적으로 추정치 — 미상 성분은 수동 입력으로 보완
 - 처방약 충돌 검사 미구현 (OCR 필요)
 - 약 사진 판별 미구현 (이미지 인식 필요)
 - 브라우저 푸시 알림 미구현 (앱 내 체크리스트만 제공)
