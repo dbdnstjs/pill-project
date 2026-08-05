@@ -53,19 +53,22 @@ Spring Boot 백엔드 (:8080)
 - Node.js 20+
 - Docker Desktop
 
-### 1. PostgreSQL 실행
+### 1. 환경변수 파일 생성
 
 ```bash
-docker run -d \
-  --name pill-db \
-  -e POSTGRES_USER=pilluser \
-  -e POSTGRES_PASSWORD=pillpass \
-  -e POSTGRES_DB=pilldb \
-  -p 5432:5432 \
-  postgres:15
+copy .env.example .env
+# .env 열어서 POSTGRES_USER, POSTGRES_PASSWORD 값 채우기
 ```
 
-### 2. KDRI 2025 시드 데이터 삽입
+### 2. PostgreSQL 실행 (Docker Compose)
+
+```bash
+docker-compose up -d
+```
+
+> `docker-compose.yml`에 Redis 컨테이너도 정의돼 있지만 현재 코드에서는 사용하지 않습니다.
+
+### 3. KDRI 2025 시드 데이터 삽입
 
 ```bash
 # Windows
@@ -73,19 +76,32 @@ docker cp platform/src/main/resources/data/seed_kdri2025.sql pill-db:/tmp/seed.s
 docker exec -i pill-db psql -U pilluser -d pilldb -f /tmp/seed.sql
 ```
 
-### 3. Spring Boot 백엔드 실행
+> 사용자명/DB명은 `.env`에 설정한 값과 일치해야 합니다.
+
+### 4. Spring Boot 백엔드 실행
+
+`platform/src/main/resources/application-local.properties` 파일을 새로 생성합니다 (`.gitignore` 대상이라 직접 만들어야 함).
+
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/pilldb
+spring.datasource.username=<.env의 POSTGRES_USER>
+spring.datasource.password=<.env의 POSTGRES_PASSWORD>
+
+jwt.secret=your-jwt-secret-key-32chars-or-more
+jwt.expiration=86400000
+
+openapi.base-url=http://openapi.foodsafetykorea.go.kr/api
+openapi.secret-key=YOUR_FOODSAFETY_API_KEY
+
+gemini.api.key=YOUR_GEMINI_API_KEY
+```
 
 ```bash
 cd platform
-
-# application-local.properties에 아래 키 추가
-# openapi.secret-key=YOUR_FOODSAFETY_API_KEY
-# gemini.api.key=YOUR_GEMINI_API_KEY
-
 ./gradlew bootRun
 ```
 
-### 4. 프론트엔드 실행
+### 5. 프론트엔드 실행
 
 ```bash
 cd frontend
@@ -173,15 +189,21 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 |--------|------|------|
 | GET | `/api/supplements/search?keyword=` | 식품안전나라 검색 |
 | POST | `/api/supplements` | 영양제 DB 저장 |
+| GET | `/api/supplements/{id}` | 영양제 상세 조회 |
+| GET | `/api/supplements/{id}/ingredients` | 영양제 성분 목록 조회 |
 | POST | `/api/user-supplements` | 내 복용 목록에 추가 |
 | GET | `/api/user-supplements` | 내 복용 영양제 목록 |
 | DELETE | `/api/user-supplements/{id}` | 복용 중단 |
 | POST | `/api/user-supplements/auto-schedule` | 자동 시간표 생성 |
+| POST | `/api/user-supplements/{id}/schedules` | 복용 스케줄 추가 |
+| GET | `/api/user-supplements/{id}/schedules` | 복용 스케줄 조회 |
+| DELETE | `/api/user-supplements/{id}/schedules/{scheduleId}` | 복용 스케줄 삭제 |
 
 ### 복용 기록
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | GET | `/api/dosage-records/today` | 오늘의 체크리스트 |
+| GET | `/api/dosage-records` | 복용 기록 전체 조회 |
 | POST | `/api/dosage-records` | 복용 기록 저장 |
 
 ### 분석
@@ -189,6 +211,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 |--------|------|------|
 | POST | `/api/analysis` | AI 궁합 분석 |
 | GET | `/api/nutrition/summary` | 영양소 섭취 현황 |
+| PUT | `/api/nutrition/ingredient-amount` | 성분 섭취량 수정 |
 | GET | `/api/recommendations?symptom=` | 증상별 추천 |
 
 ---
