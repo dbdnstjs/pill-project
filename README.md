@@ -129,8 +129,7 @@ docker exec -i pill-db psql -U pilluser -d pilldb -f /tmp/seed.sql
 
 ### 4. Spring Boot 백엔드 실행
 
-`platform/src/main/resources/application-local.properties` 파일을 생성합니다.
-(`.gitignore` 대상이라 직접 만들어야 합니다.)
+`platform/src/main/resources/application-local.properties` 파일을 생성합니다. `.gitignore` 대상이라 직접 만들어야 합니다.
 
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/pilldb
@@ -285,7 +284,7 @@ nutrient_limits        KDRI 2025 기준값 (연령대, 성별별 권장량, 상�
 ## 알려진 제한 사항
 
 - 식품안전나라 API가 점검 중일 때 영양제 검색 불가 (외부 서비스 의존)
-- 공공 API가 함량을 정형 데이터로 제공하지 않아, 원문 파싱은 근본적으로 추정치 — 미상 성분은 수동 입력으로 보완
+- 공공 API가 함량을 정형 데이터로 제공하지 않아 원문 파싱은 근본적으로 추정치이며, 미상 성분은 수동 입력으로 보완
 
 ---
 
