@@ -30,16 +30,16 @@ cd frontend && npm install && npm run dev  # 4. 프론트엔드
 | AI 궁합 분석 | Gemini AI가 성분 간 상호작용을 SYNERGY / CAUTION / AVOID 신호등으로 표시 |
 | 자동 복용 시간표 | 성분 특성(공복/식후/저녁)에 따라 최적 시간대 자동 배정, 칼슘+철분 자동 분리 |
 | 오늘의 체크리스트 | 오늘 요일에 맞는 복용 스케줄 목록, 체크박스로 복용 기록 |
-| 과다섭취 방지 | KDRI 2025 기준 연령대·성별별 권장량 대비 % 계산 및 상한선 경고 |
-| 증상별 영양소 추천 | 눈 침침함·관절통·수면·기억력·피로·혈압혈당 6가지 증상별 추천 |
+| 과다섭취 방지 | KDRI 2025 기준 연령대 및 성별별 권장량 대비 % 계산 및 상한선 경고 |
+| 증상별 영양소 추천 | 눈 침침함, 관절통, 수면, 기억력, 피로, 혈압혈당 6가지 증상별 추천 |
 
 ---
 
 ## 기술 스택
 
 ```
-Frontend   Next.js 16 · React 19 · TypeScript · Tailwind CSS 4
-Backend    Spring Boot 3.5 · Java 17 · Spring Security · JPA/Hibernate
+Frontend   Next.js 16, React 19, TypeScript, Tailwind CSS 4
+Backend    Spring Boot 3.5, Java 17, Spring Security, JPA/Hibernate
 AI         Google Gemini 2.5 Flash API (Spring Boot에서 직접 호출)
 Database   PostgreSQL 15 (Docker)
 Auth       JWT (HMAC-SHA256, Stateless)
@@ -64,7 +64,7 @@ Spring Boot 백엔드 (:8080)
 
 ### Gemini를 Spring Boot에서 직접 호출
 
-초기에는 AI 분석을 별도 Python(FastAPI) 서버로 분리했습니다. AI 생태계 활용을 고려한 선택이었지만, 운영해보니 Python 서버가 단일 장애점(SPOF)이 되어 콜드스타트 시 첫 요청이 8~10초 지연되고 502 오류가 반복됐습니다. 두 서비스를 유지하는 비용·운영 부담도 컸습니다.
+초기에는 AI 분석을 별도 Python(FastAPI) 서버로 분리했습니다. AI 생태계 활용을 고려한 선택이었지만, 운영해보니 Python 서버가 단일 장애점(SPOF)이 되어 콜드스타트 시 첫 요청이 8~10초 지연되고 502 오류가 반복됐습니다. 두 서비스를 유지하는 비용 및 운영 부담도 컸습니다.
 
 트레이드오프를 재평가해 Python 서버를 제거하고, Spring Boot에서 Gemini REST API를 직접 호출하는 구조로 전환했습니다.
 
@@ -72,7 +72,7 @@ Spring Boot 백엔드 (:8080)
 
 초기에 캐싱용으로 Redis 컨테이너를 준비했지만 제거했습니다.
 
-이 앱은 개인·소규모 사용을 목적으로 하고 있어 동시 요청량이 많지 않습니다. 사용자별 데이터를 조회하는 구조라 공유 캐시의 이점도 적었습니다. 캐싱으로 얻는 응답 속도 향상보다 **인프라 비용(배포 시 Redis 애드온)과 코드 복잡도가 더 크다고 판단**해 도입하지 않았습니다.
+이 앱은 개인 및 소규모 사용을 목적으로 하고 있어 동시 요청량이 많지 않습니다. 사용자별 데이터를 조회하는 구조라 공유 캐시의 이점도 적었습니다. 캐싱으로 얻는 응답 속도 향상보다 **인프라 비용(배포 시 Redis 애드온)과 코드 복잡도가 더 크다고 판단**해 도입하지 않았습니다.
 
 다만 식품안전나라 API 응답은 캐싱 가치가 있습니다. 동일 키워드 검색이 반복되고 결과가 자주 바뀌지 않으며, 외부 API 장애 시 폴백으로도 활용할 수 있기 때문입니다. 실제로 응답 지연이나 API 장애를 체감하는 시점에 도입할 계획입니다.
 
@@ -124,7 +124,7 @@ docker cp platform/src/main/resources/data/seed_kdri2025.sql pill-db:/tmp/seed.s
 docker exec -i pill-db psql -U pilluser -d pilldb -f /tmp/seed.sql
 ```
 
-> 사용자명·DB명은 `.env`에 설정한 값과 일치해야 합니다.
+> 사용자명, DB명은 `.env`에 설정한 값과 일치해야 합니다.
 > 이 시드가 없으면 영양제 등록 시 성분 매칭(파싱)이 동작하지 않습니다.
 
 ### 4. Spring Boot 백엔드 실행
@@ -196,7 +196,7 @@ npm run dev
 |--------|------|
 | `NEXT_PUBLIC_API_URL` | Spring Boot 배포 URL |
 
-> `supplement_ingredients`는 사용자가 영양제를 검색·저장할 때 `rawMaterial` 텍스트가 자동 파싱되어 채워집니다. KDRI 시드(`ingredients` 테이블)가 먼저 들어가 있어야 파싱이 정상 동작합니다.
+> `supplement_ingredients`는 사용자가 영양제를 검색 및 저장할 때 `rawMaterial` 텍스트가 자동 파싱되어 채워집니다. KDRI 시드(`ingredients` 테이블)가 먼저 들어가 있어야 파싱이 정상 동작합니다.
 
 ---
 
@@ -248,9 +248,9 @@ supplements            영양제 상품 (식품안전나라 원본 데이터)
 ingredients            성분 마스터 (칼슘, 비타민D 등 23종)
 supplement_ingredients 영양제별 성분 함량 (자동 파싱)
 user_supplements       내 복용 영양제 목록
-dosage_schedules       복용 스케줄 (요일·시간)
+dosage_schedules       복용 스케줄 (요일, 시간)
 dosage_records         복용 기록
-nutrient_limits        KDRI 2025 기준값 (연령대·성별별 권장량·상한선)
+nutrient_limits        KDRI 2025 기준값 (연령대, 성별별 권장량, 상한선)
 ```
 
 ---
@@ -275,8 +275,8 @@ nutrient_limits        KDRI 2025 기준값 (연령대·성별별 권장량·상�
 | 뼈 마디가 쑤셔요 | 칼슘, 비타민 D |
 | 잠을 깊게 못 자요 | 마그네슘 |
 | 기억력이 떨어져요 | 오메가3 |
-| 피로하고 기운이 없어요 | 비타민 B1·B2·B12, 마그네슘 |
-| 혈압·혈당이 걱정돼요 | 오메가3, 코엔자임Q10 |
+| 피로하고 기운이 없어요 | 비타민 B1, B2, B12, 마그네슘 |
+| 혈압 및 혈당이 걱정돼요 | 오메가3, 코엔자임Q10 |
 
 > 이미 충분히 섭취 중인 성분(현재 섭취량 ≥ KDRI 권장량)은 "이미 복용 중"으로 표시됩니다.
 
@@ -295,6 +295,5 @@ nutrient_limits        KDRI 2025 기준값 (연령대·성별별 권장량·상�
 - 약 사진 판별 기능 추가 (이미지 인식 필요)
 - 브라우저 푸시 알림 추가 (현재는 앱 내 체크리스트만 제공)
 - 테스트 코드 추가 (JUnit + Testcontainers)
-- 예외 타입 세분화 (404 / 403 / 409 구분)
 - 식품안전나라 API 응답 캐싱 및 장애 폴백 처리
-- 성분 파싱 정확도 향상 (실패 케이스 수집 → 정규식·별칭 사전 보강)
+- 성분 파싱 정확도 향상 (실패 케이스 수집 → 정규식 및 별칭 사전 보강)
