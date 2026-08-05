@@ -2,7 +2,23 @@
 
 복용 중인 영양제의 성분을 분석해 과다섭취를 방지하고, AI 기반 궁합 분석과 자동 복용 시간표를 제공하는 웹 애플리케이션입니다.
 
-**배포 주소:** https://pill-project-kohl.vercel.app
+**배포 주소:** https://pill-project-kohl.vercel.app (프론트엔드)
+
+> ⚠️ 백엔드 호스팅(Railway) 무료 크레딧 소진으로 API 서버는 현재 중지된 상태입니다.
+> 전체 기능은 아래 [로컬 실행 방법](#로컬-실행-방법)으로 확인하실 수 있습니다.
+
+---
+
+## 빠른 시작
+
+```bash
+copy .env.example .env                     # 1. 환경변수 생성 후 값 채우기
+docker-compose up -d                       # 2. PostgreSQL 실행
+cd platform && ./gradlew bootRun           # 3. 백엔드 (application-local.properties 필요)
+cd frontend && npm install && npm run dev  # 4. 프론트엔드
+```
+
+브라우저에서 `http://localhost:3000` 접속
 
 ---
 
@@ -42,7 +58,35 @@ Spring Boot 백엔드 (:8080)
         └── Google Gemini 2.5 Flash API (직접 호출)
 ```
 
-> 초기에는 AI 분석을 별도 Python(FastAPI) 서버로 분리했으나, 운영 중 단일 장애점(SPOF)·비용 문제로 Spring Boot에서 Gemini REST API를 직접 호출하는 구조로 전환했습니다.
+---
+
+## 기술 선택 이유
+
+### Gemini를 Spring Boot에서 직접 호출
+
+초기에는 AI 분석을 별도 Python(FastAPI) 서버로 분리했습니다. AI 생태계 활용을 고려한 선택이었지만, 운영해보니 Python 서버가 단일 장애점(SPOF)이 되어 콜드스타트 시 첫 요청이 8~10초 지연되고 502 오류가 반복됐습니다. 두 서비스를 유지하는 비용·운영 부담도 컸습니다.
+
+트레이드오프를 재평가해 Python 서버를 제거하고, Spring Boot에서 Gemini REST API를 직접 호출하는 구조로 전환했습니다.
+
+### Redis 캐싱 미적용
+
+초기에 캐싱용으로 Redis 컨테이너를 준비했지만 제거했습니다.
+
+이 앱은 개인·소규모 사용을 목적으로 하고 있어 동시 요청량이 많지 않습니다. 사용자별 데이터를 조회하는 구조라 공유 캐시의 이점도 적었습니다. 캐싱으로 얻는 응답 속도 향상보다 **인프라 비용(배포 시 Redis 애드온)과 코드 복잡도가 더 크다고 판단**해 도입하지 않았습니다.
+
+다만 식품안전나라 API 응답은 캐싱 가치가 있습니다. 동일 키워드 검색이 반복되고 결과가 자주 바뀌지 않으며, 외부 API 장애 시 폴백으로도 활용할 수 있기 때문입니다. 실제로 응답 지연이나 API 장애를 체감하는 시점에 도입할 계획입니다.
+
+### AI와 규칙 기반의 분리
+
+AI를 남용하지 않고 역할을 나눴습니다.
+
+| 구분 | 사용처 | 이유 |
+|------|--------|------|
+| AI (Gemini) | 궁합 분석 | 성분 조합의 상호작용은 복잡한 판단이 필요 |
+| 규칙 기반 | 과다섭취 계산 | KDRI 2025 공식 데이터로 정확성 확보 |
+| 규칙 기반 | 증상별 추천 | 검증된 매핑, AI 호출 없이 즉시 응답 |
+
+의학 정보를 다루는 서비스이므로, 검증 가능한 영역은 공식 데이터로 처리해 AI 할루시네이션 위험을 구조적으로 차단했습니다.
 
 ---
 
@@ -57,35 +101,41 @@ Spring Boot 백엔드 (:8080)
 
 ```bash
 copy .env.example .env
-# .env 열어서 POSTGRES_USER, POSTGRES_PASSWORD 값 채우기
 ```
 
-### 2. PostgreSQL 실행 (Docker Compose)
+`.env` 파일을 열어 값을 채웁니다.
+
+```env
+POSTGRES_DB=pilldb
+POSTGRES_USER=pilluser
+POSTGRES_PASSWORD=pillpass
+```
+
+### 2. PostgreSQL 실행
 
 ```bash
 docker-compose up -d
 ```
 
-> `docker-compose.yml`에 Redis 컨테이너도 정의돼 있지만 현재 코드에서는 사용하지 않습니다.
-
 ### 3. KDRI 2025 시드 데이터 삽입
 
 ```bash
-# Windows
 docker cp platform/src/main/resources/data/seed_kdri2025.sql pill-db:/tmp/seed.sql
 docker exec -i pill-db psql -U pilluser -d pilldb -f /tmp/seed.sql
 ```
 
-> 사용자명/DB명은 `.env`에 설정한 값과 일치해야 합니다.
+> 사용자명·DB명은 `.env`에 설정한 값과 일치해야 합니다.
+> 이 시드가 없으면 영양제 등록 시 성분 매칭(파싱)이 동작하지 않습니다.
 
 ### 4. Spring Boot 백엔드 실행
 
-`platform/src/main/resources/application-local.properties` 파일을 새로 생성합니다 (`.gitignore` 대상이라 직접 만들어야 함).
+`platform/src/main/resources/application-local.properties` 파일을 생성합니다.
+(`.gitignore` 대상이라 직접 만들어야 합니다.)
 
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/pilldb
-spring.datasource.username=<.env의 POSTGRES_USER>
-spring.datasource.password=<.env의 POSTGRES_PASSWORD>
+spring.datasource.username=pilluser
+spring.datasource.password=pillpass
 
 jwt.secret=your-jwt-secret-key-32chars-or-more
 jwt.expiration=86400000
@@ -103,6 +153,12 @@ cd platform
 
 ### 5. 프론트엔드 실행
 
+`frontend/.env.local` 파일을 생성합니다.
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8080
+```
+
 ```bash
 cd frontend
 npm install
@@ -110,32 +166,6 @@ npm run dev
 ```
 
 브라우저에서 `http://localhost:3000` 접속
-
----
-
-## 환경변수
-
-### Spring Boot (`application-local.properties`)
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/pilldb
-spring.datasource.username=pilluser
-spring.datasource.password=pillpass
-
-jwt.secret=your-jwt-secret-key-32chars-or-more
-jwt.expiration=86400000
-
-openapi.base-url=http://openapi.foodsafetykorea.go.kr/api
-openapi.secret-key=YOUR_FOODSAFETY_API_KEY
-
-gemini.api.key=YOUR_GEMINI_API_KEY
-```
-
-### Next.js (`.env.local`)
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8080
-```
 
 ---
 
@@ -148,6 +178,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 2. KDRI 2025 시드 데이터 삽입 (Railway 콘솔에서 SQL 실행)
 3. Spring Boot 백엔드 배포 (환경변수 설정)
 4. Vercel에 Next.js 프론트엔드 배포
+5. 백엔드 CORS 설정에 Vercel 도메인 추가
 ```
 
 ### Railway — Spring Boot 환경변수
@@ -165,14 +196,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 |--------|------|
 | `NEXT_PUBLIC_API_URL` | Spring Boot 배포 URL |
 
-### 배포 시 필수 시드 데이터
-
-```bash
-# Railway 콘솔 또는 psql 접속 후 실행
-# platform/src/main/resources/data/seed_kdri2025.sql 내용 붙여넣기
-```
-
-> `supplement_ingredients`는 사용자가 영양제를 검색·저장할 때 `rawMaterial` 텍스트가 자동 파싱되어 채워집니다. KDRI 시드(ingredients 테이블)가 먼저 들어가 있어야 파싱이 정상 동작합니다.
+> `supplement_ingredients`는 사용자가 영양제를 검색·저장할 때 `rawMaterial` 텍스트가 자동 파싱되어 채워집니다. KDRI 시드(`ingredients` 테이블)가 먼저 들어가 있어야 파싱이 정상 동작합니다.
 
 ---
 
@@ -239,7 +263,7 @@ nutrient_limits        KDRI 2025 기준값 (연령대·성별별 권장량·상�
 | 아침 식후 | 08:30 | 칼슘, 비타민 D/A/E/K, 오메가3, 루테인, 코엔자임Q10, 아연, 엽산 등 |
 | 저녁 | 21:00 | 철분, 마그네슘 |
 
-> 칼슘과 철분이 동시에 있으면 자동으로 분리 배정되며 경고 문구를 표시합니다.
+> 칼슘과 철분이 동시에 있으면 서로 흡수를 방해하므로 자동으로 분리 배정되며 경고 문구를 표시합니다.
 
 ---
 
@@ -265,3 +289,12 @@ nutrient_limits        KDRI 2025 기준값 (연령대·성별별 권장량·상�
 - 처방약 충돌 검사 미구현 (OCR 필요)
 - 약 사진 판별 미구현 (이미지 인식 필요)
 - 브라우저 푸시 알림 미구현 (앱 내 체크리스트만 제공)
+
+---
+
+## 향후 개선 계획
+
+- 테스트 코드 추가 (JUnit + Testcontainers)
+- 예외 타입 세분화 (404 / 403 / 409 구분)
+- 식품안전나라 API 응답 캐싱 및 장애 폴백 처리
+- 성분 파싱 정확도 향상 (실패 케이스 수집 → 정규식·별칭 사전 보강)
